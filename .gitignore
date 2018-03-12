@@ -1,4 +1,4 @@
 .idea/*
 robolab.iml
 target/*
-src/main/resources/login.json
+src/main/resources/mqtt_login.json

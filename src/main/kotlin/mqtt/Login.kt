@@ -9,7 +9,7 @@ import java.io.File
  */
 object Login {
     val login by lazy {
-        jacksonObjectMapper().readValue<Login>(File("src/main/resources/login.json"))
+        jacksonObjectMapper().readValue<Login>(File("src/main/resources/mqtt_login.json"))
     }
 
     data class Login(
