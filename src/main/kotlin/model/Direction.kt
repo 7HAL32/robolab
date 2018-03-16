@@ -9,15 +9,18 @@ enum class Direction {
     SOUTH,
     WEST;
 
-    fun parse(direction: String) = when (direction.toLowerCase()) {
-        "n" -> NORTH
-        "north" -> NORTH
-        "e" -> EAST
-        "east" -> EAST
-        "s" -> SOUTH
-        "south" -> SOUTH
-        "w" -> WEST
-        "west" -> WEST
-        else -> NORTH // TODO: default value
+    companion object {
+
+        fun parse(direction: String) = when (direction.toLowerCase()) {
+            "n" -> NORTH
+            "north" -> NORTH
+            "e" -> EAST
+            "east" -> EAST
+            "s" -> SOUTH
+            "south" -> SOUTH
+            "w" -> WEST
+            "west" -> WEST
+            else -> NORTH // TODO: default value
+        }
     }
 }
