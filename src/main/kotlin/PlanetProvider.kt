@@ -19,9 +19,7 @@ class PlanetProvider(
             return Point.Color.UNDEFINED // TODO
         }
 
-        fun getPlanet(name: String): Planet {
-            return Planet(Paths.get("planet").resolve("$name.planet"))
-        }
+        fun getPlanet(name: String) = Planet(Paths.get("planet").resolve("$name.planet"))
 
     }
 }

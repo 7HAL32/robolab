@@ -104,8 +104,8 @@ class Plotter(
         paths
                 .flatMap {
                     setOf(
-                            Pair(it.startPoint, it.startDirection),
-                            Pair(it.endPoint, it.endDirection)
+                            it.startPoint to it.startDirection,
+                            it.endPoint to it.endDirection
                     )
                 }
                 .groupBy { it.first }
@@ -133,7 +133,7 @@ class Plotter(
             drawLine(directedPoint.first.to2D(), getLineStart(directedPoint.first, it), COLOR.LINE)
         }
         if (directedPoint.first == start) {
-            drawLine(directedPoint.first.to2D(), directedPoint.first.to2D() - Pair(0.0, 0.5))
+            drawLine(directedPoint.first.to2D(), directedPoint.first.to2D() - (0.0 to 0.5))
         }
 
         val background = when (directedPoint.first.getColor(start, startColor)) {
@@ -143,7 +143,7 @@ class Plotter(
         }
 
         drawRect(
-                directedPoint.first.to2D() - Pair(POINT_SIZE / 2, -POINT_SIZE / 2),
+                directedPoint.first.to2D() - (POINT_SIZE / 2 to -POINT_SIZE / 2),
                 Point2D(POINT_SIZE, POINT_SIZE),
                 background,
                 COLOR.LINE
@@ -152,10 +152,10 @@ class Plotter(
 
     private fun getLineStart(point: Point, direction: Direction, shift: Double = POINT_SHIFT) =
             when (direction) {
-                Direction.NORTH -> point.to2D() + Pair(0.toDouble(), shift)
-                Direction.EAST -> point.to2D() + Pair(shift, 0.toDouble())
-                Direction.SOUTH -> point.to2D() - Pair(0.toDouble(), shift)
-                Direction.WEST -> point.to2D() - Pair(shift, 0.toDouble())
+                Direction.NORTH -> point.to2D() + (0.toDouble() to shift)
+                Direction.EAST -> point.to2D() + (shift to 0.toDouble())
+                Direction.SOUTH -> point.to2D() - (0.toDouble() to shift)
+                Direction.WEST -> point.to2D() - (shift to 0.toDouble())
             }
 
     private fun printPath(path: Path, attributes: Set<PathAttributes>) = with(path) {
@@ -166,12 +166,12 @@ class Plotter(
         }
     }
 
-    private fun getUsedPointSides(point: Point): Set<Direction> =
+    private fun getUsedPointSides(point: Point) =
             paths.map { it.first }
                     .flatMap {
                         setOf(
-                                Pair(it.startPoint, it.startDirection),
-                                Pair(it.endPoint, it.endDirection)
+                                it.startPoint to it.startDirection,
+                                it.endPoint to it.endDirection
                         )
                     }
                     .groupBy { it.first }
@@ -179,7 +179,7 @@ class Plotter(
                         it.value
                                 .map { it.second }
                                 .toSet()
-                    }.getOrDefault(point, HashSet())
+                    }[point] ?: emptySet()
 
 
     private fun printStraightPath(path: Path, attributes: Set<PathAttributes>) = drawLine(
@@ -202,24 +202,24 @@ class Plotter(
             }
             isOppositeDirection() -> {
                 val sides = getUsedPointSides(path.startPoint)
-                when (path.startDirection) {
+                when (startDirection) {
                     Direction.NORTH, Direction.SOUTH -> {
                         val shift = if (Direction.WEST in sides) radius else -radius
-                        val c1 = s.add(shift, 0.0)
-                        val c2 = e.add(shift, 0.0)
+                        val c1 = s + (shift to 0.0)
+                        val c2 = e + (shift to 0.0)
 
-                        drawArc(c1, radius, COLOR.LINE, if (path.startDirection == Direction.NORTH) 0.0 else 180.0, 180.0)
-                        drawArc(c2, radius, COLOR.LINE, if (path.startDirection == Direction.SOUTH) 0.0 else 180.0, 180.0)
-                        drawLine(c1.add(shift, 0.0), c2.add(shift, 0.0))
+                        drawArc(c1, radius, COLOR.LINE, if (startDirection == Direction.NORTH) 0.0 else 180.0, 180.0)
+                        drawArc(c2, radius, COLOR.LINE, if (startDirection == Direction.SOUTH) 0.0 else 180.0, 180.0)
+                        drawLine(c1 + (shift to 0.0), c2 + (shift to 0.0))
                     }
                     Direction.EAST, Direction.WEST -> {
                         val shift = if (Direction.SOUTH in sides) radius else -radius
-                        val c1 = s.add(0.0, shift)
-                        val c2 = e.add(0.0, shift)
+                        val c1 = s + (0.0 to shift)
+                        val c2 = e + (0.0 to shift)
 
-                        drawArc(c1, radius, COLOR.LINE, if (path.startDirection == Direction.WEST) 90.0 else 270.0, 180.0)
-                        drawArc(c2, radius, COLOR.LINE, if (path.startDirection == Direction.EAST) 90.0 else 270.0, 180.0)
-                        drawLine(c1.add(0.0, shift), c2.add(0.0, shift))
+                        drawArc(c1, radius, COLOR.LINE, if (startDirection == Direction.WEST) 90.0 else 270.0, 180.0)
+                        drawArc(c2, radius, COLOR.LINE, if (startDirection == Direction.EAST) 90.0 else 270.0, 180.0)
+                        drawLine(c1 + (0.0 to shift), c2 + (0.0 to shift))
                     }
                 }
             }
@@ -300,7 +300,7 @@ class Plotter(
         if (background != null)
             canvas.fill = background
 
-        val p = transform(center - Pair(radius, -radius))
+        val p = transform(center - (radius to -radius))
 
         val r = radius * 2 * WIDTH_GRID * scale
         canvas.fillArc(p.x, p.y, r, r, 0.toDouble(), 360.toDouble(), ArcType.ROUND)
@@ -310,7 +310,7 @@ class Plotter(
         if (lineColor != null)
             canvas.stroke = lineColor
 
-        val p = transform(center - Pair(radius, -radius))
+        val p = transform(center - (radius to -radius))
 
         val r = radius * 2 * WIDTH_GRID * scale
         canvas.strokeArc(p.x, p.y, r, r, start, extend, ArcType.OPEN)

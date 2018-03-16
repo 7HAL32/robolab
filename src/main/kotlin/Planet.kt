@@ -19,14 +19,14 @@ class Planet(filePath: Path) {
         val lines = filePath.toFile().readLines().map { it.split("[, ]".toRegex()).map { it.trim() } }
 
         val startPointAndColor = lines.find { it.first() == "start" }?.let {
-            Pair(Point(it[1].toInt(), it[2].toInt()), if (it.size > 3) {
+            Point(it[1].toInt(), it[2].toInt()) to if (it.size > 3) {
                 when (it[3].toUpperCase()) {
                     "RED" -> Point.Color.RED
                     "BLUE" -> Point.Color.BLUE
                     else -> Point.Color.UNDEFINED
                 }
-            } else Point.Color.UNDEFINED)
-        } ?: Pair(Point(0, 0), Point.Color.UNDEFINED).also {
+            } else Point.Color.UNDEFINED
+        } ?: (Point(0, 0) to Point.Color.UNDEFINED).also {
             throw IllegalArgumentException("Cannot find a start point")
         }
         start = startPointAndColor.first
@@ -49,7 +49,7 @@ class Planet(filePath: Path) {
     fun plot(plotter: Plotter) = plotter.onUpdate(
             name,
             start,
-            paths.map { Pair(it, emptySet<PathAttributes>()) },
+            paths.map { it to emptySet<PathAttributes>() },
             target
     )
 
