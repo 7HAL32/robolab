@@ -2,58 +2,55 @@ import model.Direction
 import model.Point
 import plotter.PathAttributes
 import plotter.Plotter
-import java.nio.file.Files
 import java.nio.file.Path
 
 /**
  * @author lars
  */
-class Planet(path: Path) {
+class Planet(filePath: Path) {
 
-    val name: String = path.fileName.toString()
-    val paths: List<Pair<model.Path, Set<PathAttributes>>>
-    var target: Point? = null
-    var start: Point? = null
-    var startColor: Point.Color = Point.Color.UNDEFINED
+    val name: String = filePath.fileName.toString()
+    val paths: List<model.Path>
+    val target: Point?
+    val start: Point
+    val startColor: Point.Color
 
     init {
-        paths = ArrayList()
-        for (line in Files.lines(path).map { it.trim() }) {
-            val split = line.split("[, ]".toRegex())
-            when (split[0]) {
-                "start" -> {
-                    start = Point(split[1].toInt(), split[2].toInt())
-                    if (split.size > 3) {
-                        startColor = when (split[3].toUpperCase()) {
-                            "RED" -> Point.Color.RED
-                            "BLUE" -> Point.Color.BLUE
-                            else -> Point.Color.UNDEFINED
-                        }
-                    }
-                }
-                "target" -> {
-                    target = Point(split[1].toInt(), split[2].toInt())
-                }
-                else -> {
-                    val p = model.Path(
-                            Point(split[0].toInt(), split[1].toInt()),
-                            Direction.parse(split[2]),
-                            Point(split[3].toInt(), split[4].toInt()),
-                            Direction.parse(split[5]),
-                            if (split[6] == "blocked") -1 else split[6].toInt()
-                    )
+        val lines = filePath.toFile().readLines().map { it.split("[, ]".toRegex()).map { it.trim() } }
 
-                    paths.add(Pair(p, HashSet()))
+        val startPointAndColor = lines.find { it.first() == "start" }?.let {
+            Pair(Point(it[1].toInt(), it[2].toInt()), if (it.size > 3) {
+                when (it[3].toUpperCase()) {
+                    "RED" -> Point.Color.RED
+                    "BLUE" -> Point.Color.BLUE
+                    else -> Point.Color.UNDEFINED
                 }
-            }
+            } else Point.Color.UNDEFINED)
+        } ?: Pair(Point(0, 0), Point.Color.UNDEFINED).also {
+            throw IllegalArgumentException("Cannot find a start point")
         }
+        start = startPointAndColor.first
+        startColor = startPointAndColor.second
 
-        if (start == null)
-            throw IllegalArgumentException("Cannot found a start point")
+
+        target = lines.find { it.first() == "target" }?.let { Point(it[1].toInt(), it[2].toInt()) }
+
+        paths = lines.filter { it.first().toIntOrNull() != null }.map {
+            model.Path(
+                    Point(it[0].toInt(), it[1].toInt()),
+                    Direction.parse(it[2]),
+                    Point(it[3].toInt(), it[4].toInt()),
+                    Direction.parse(it[5]),
+                    if (it[6] == "blocked") -1 else it[6].toInt()
+            )
+        }
     }
 
-    fun plot(plotter: Plotter) {
-        plotter.onUpdate(name, start!!, paths, target)
-    }
+    fun plot(plotter: Plotter) = plotter.onUpdate(
+            name,
+            start,
+            paths.map { Pair(it, emptySet<PathAttributes>()) },
+            target
+    )
 
 }

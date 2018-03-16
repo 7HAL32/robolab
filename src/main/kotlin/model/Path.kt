@@ -23,44 +23,29 @@ data class Path(
                         endDirection == other.endDirection)
     }
 
-    fun isOnSameLine(): Boolean {
-        return startPoint.x == endPoint.x || startPoint.y == endPoint.y
+    fun isOnSameLine() = startPoint.x == endPoint.x || startPoint.y == endPoint.y
+
+    fun isOppositeDirection() = when (startDirection) {
+        Direction.NORTH -> endDirection == Direction.SOUTH
+        Direction.EAST -> endDirection == Direction.WEST
+        Direction.SOUTH -> endDirection == Direction.NORTH
+        Direction.WEST -> endDirection == Direction.EAST
     }
 
-    fun isOppositeDirection(): Boolean {
-        return when (startDirection) {
-            Direction.NORTH -> endDirection == Direction.SOUTH
-            Direction.EAST -> endDirection == Direction.WEST
-            Direction.SOUTH -> endDirection == Direction.NORTH
-            Direction.WEST -> endDirection == Direction.EAST
-        }
-    }
+    fun isSameDirection() = startDirection == endDirection
 
-    fun isSameDirection(): Boolean {
-        return startDirection == endDirection
-    }
+    fun isTowardsDirection() = startPoint.distance(endPoint) >=
+            startPoint.getNextPoint(startDirection).distance(endPoint.getNextPoint(endDirection))
 
-    fun isTowardsDirection(): Boolean {
-        return startPoint.distance(endPoint) >= startPoint.getNextPoint(startDirection).distance(endPoint.getNextPoint(endDirection))
-    }
+    fun isTowardsTopRight() = (startDirection == Direction.NORTH && endDirection == Direction.EAST) ||
+            (endDirection == Direction.NORTH && startDirection == Direction.EAST)
 
-    fun isTowardsTopRight(): Boolean {
-        return (startDirection == Direction.NORTH && endDirection == Direction.EAST) ||
-                (endDirection == Direction.NORTH && startDirection == Direction.EAST)
-    }
+    fun isTowardsTopLeft() = (startDirection == Direction.NORTH && endDirection == Direction.WEST) ||
+            (endDirection == Direction.NORTH && startDirection == Direction.WEST)
 
-    fun isTowardsTopLeft(): Boolean {
-        return (startDirection == Direction.NORTH && endDirection == Direction.WEST) ||
-                (endDirection == Direction.NORTH && startDirection == Direction.WEST)
-    }
+    fun isTowardsBottomRight() = (startDirection == Direction.SOUTH && endDirection == Direction.EAST) ||
+            (endDirection == Direction.SOUTH && startDirection == Direction.EAST)
 
-    fun isTowardsBottomRight(): Boolean {
-        return (startDirection == Direction.SOUTH && endDirection == Direction.EAST) ||
-                (endDirection == Direction.SOUTH && startDirection == Direction.EAST)
-    }
-
-    fun isTowardsBottomLeft(): Boolean {
-        return (startDirection == Direction.SOUTH && endDirection == Direction.WEST) ||
-                (endDirection == Direction.SOUTH && startDirection == Direction.WEST)
-    }
+    fun isTowardsBottomLeft() = (startDirection == Direction.SOUTH && endDirection == Direction.WEST) ||
+            (endDirection == Direction.SOUTH && startDirection == Direction.WEST)
 }

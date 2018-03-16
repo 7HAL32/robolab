@@ -63,7 +63,7 @@ class MyView : View() {
         }
 
 
-        val planet = Planet(PlanetProvider.getPlanet("large_staircase"))
+        val planet = PlanetProvider.getPlanet("large_staircase")
         planet.plot(plotter)
     }
 }
