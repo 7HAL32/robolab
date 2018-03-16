@@ -156,26 +156,62 @@ class Plotter(
         }
     }
 
+    private fun getUsedPointSides(point: Point): Set<Direction> =
+            paths.map { it.first }
+                    .flatMap {
+                        setOf(
+                                Pair(it.startPoint, it.startDirection),
+                                Pair(it.endPoint, it.endDirection)
+                        )
+                    }
+                    .groupBy { it.first }
+                    .mapValues {
+                        it.value
+                                .map { it.second }
+                                .toSet()
+                    }.getOrDefault(point, HashSet())
+
+
     private fun printStraightPath(path: Path, attributes: Set<PathAttributes>) {
         drawLine(getLineStart(path.startPoint, path.startDirection), getLineStart(path.endPoint, path.endDirection))
     }
 
     private fun printSamePointPath(path: Path, attributes: Set<PathAttributes>) {
+        val radius = 0.3
+        val s = getLineStart(path.startPoint, path.startDirection, radius)
+        val e = getLineStart(path.endPoint, path.endDirection, radius)
+
+        drawLine(getLineStart(path.startPoint, path.startDirection), s, COLOR.LINE)
+        drawLine(getLineStart(path.endPoint, path.endDirection), e, COLOR.LINE)
+
         when {
             path.isSameDirection() -> {
 
             }
             path.isOppositeDirection() -> {
-                println("No no no")
+                val sides = getUsedPointSides(path.startPoint)
+                when (path.startDirection) {
+                    Direction.NORTH, Direction.SOUTH -> {
+                        val shift = if (Direction.WEST in sides) radius else -radius
+                        val c1 = s.add(shift, 0.0)
+                        val c2 = e.add(shift, 0.0)
+
+                        drawArc(c1, radius, COLOR.LINE, if (path.startDirection == Direction.NORTH) 0.0 else 180.0, 180.0)
+                        drawArc(c2, radius, COLOR.LINE, if (path.startDirection == Direction.SOUTH) 0.0 else 180.0, 180.0)
+                        drawLine(c1.add(shift, 0.0), c2.add(shift, 0.0))
+                    }
+                    Direction.EAST, Direction.WEST -> {
+                        val shift = if (Direction.SOUTH in sides) radius else -radius
+                        val c1 = s.add(0.0, shift)
+                        val c2 = e.add(0.0, shift)
+
+                        drawArc(c1, radius, COLOR.LINE, if (path.startDirection == Direction.WEST) 90.0 else 270.0, 180.0)
+                        drawArc(c2, radius, COLOR.LINE, if (path.startDirection == Direction.EAST) 90.0 else 270.0, 180.0)
+                        drawLine(c1.add(0.0, shift), c2.add(0.0, shift))
+                    }
+                }
             }
             else -> {
-                val radius = 0.3
-                val s = getLineStart(path.startPoint, path.startDirection, radius)
-                val e = getLineStart(path.endPoint, path.endDirection, radius)
-
-                drawLine(getLineStart(path.startPoint, path.startDirection), s, COLOR.LINE)
-                drawLine(getLineStart(path.endPoint, path.endDirection), e, COLOR.LINE)
-
                 val p1 = Point2D(s.x, e.y)
                 val p2 = Point2D(e.x, s.y)
 
@@ -199,8 +235,7 @@ class Plotter(
             val h1 = p0.multiply(3.0).subtract(p1.multiply(6.0)).add(p2.multiply(3.0))
             val h2 = p0.multiply(-3.0).add(p1.multiply(3.0))
 
-            val h = h0.multiply(t * t * t).add(h1.multiply(t * t)).add(h2.multiply(t)).add(p0)
-            return h
+            return h0.multiply(t * t * t).add(h1.multiply(t * t)).add(h2.multiply(t)).add(p0)
         }
 
         val s = getLineStart(path.startPoint, path.startDirection)

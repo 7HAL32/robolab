@@ -40,7 +40,7 @@ class Planet(path: Path) {
                             Direction.parse(split[2]),
                             Point(split[3].toInt(), split[4].toInt()),
                             Direction.parse(split[5]),
-                            split[6].toInt()
+                            if (split[6] == "blocked") -1 else split[6].toInt()
                     )
 
                     paths.add(Pair(p, HashSet()))
