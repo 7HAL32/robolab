@@ -2,9 +2,12 @@ package plotter
 
 import PlanetListener
 import javafx.geometry.Point2D
+import javafx.geometry.VPos
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color
 import javafx.scene.shape.ArcType
+import javafx.scene.text.Font
+import javafx.scene.text.TextAlignment
 import model.Direction
 import model.Path
 import model.Point
@@ -23,12 +26,22 @@ class Plotter(
 ) : PlanetListener {
 
     private var scale = 1.0
-    private var translate = Point2D(200.toDouble(), 300.toDouble())
+    private var translate = Point2D.ZERO
 
     private var planetName = ""
     private var start: Point? = null
     private var paths = emptyList<Pair<Path, Set<PathAttributes>>>()
     private var target: Point? = null
+
+    var showGrid: Boolean = true
+        set(value) = drawAfter {
+            showGrid = value
+        }
+
+    var showGridNumber: Boolean = true
+        set(value) = drawAfter {
+            showGridNumber = value
+        }
 
     override fun onUpdate(
             planetName: String,
@@ -52,6 +65,7 @@ class Plotter(
 
     fun draw() {
         clear()
+        printGrid()
 
         start?.let {
             printAllPoints(
@@ -77,7 +91,7 @@ class Plotter(
     }
 
     fun resetScroll(point: Point) = drawAfter {
-        translate = Point2D(200.0, 300.0)
+        translate = Point2D(width/2, height*2/3) - transform(point.to2D(), Point2D.ZERO)
     }
 
     fun zoomIn() = drawAfter {
@@ -99,6 +113,43 @@ class Plotter(
     }
 
     private fun clear() = canvas.clearRect(0.0, 0.0, width, height)
+
+    private fun printGrid() {
+        val topLeft = Point2D(translate.x, translate.y)
+        val bottomRight = topLeft + (width to height)
+
+        canvas.stroke = COLOR.GRID
+        canvas.fill = COLOR.GRID_NUMBER
+        val oldWidth = canvas.lineWidth
+        canvas.lineWidth = 1.0
+
+        canvas.textAlign = TextAlignment.CENTER
+        canvas.textBaseline = VPos.CENTER
+        canvas.font = Font.font(16.0)
+
+        val gridWidth = WIDTH_GRID * scale
+        val everyLine = gridWidth > canvas.font.size
+
+        val rowOffset = Math.floor(translate.y / (WIDTH_GRID * scale)).toInt()
+        for (row in 0..Math.ceil((bottomRight.y - topLeft.y) / (WIDTH_GRID * scale)).toInt()) {
+            val y = (row * WIDTH_GRID * scale) + translate.y % (WIDTH_GRID * scale)
+            if (showGrid)
+                canvas.strokeLine(0.0, y, width, y)
+            if (showGridNumber && (y < height - 32.0 ) && (everyLine || (rowOffset - row) % 2 == 0))
+                canvas.fillText((rowOffset - row).toString(), 24.0, y)
+        }
+
+        val colOffset = Math.floor(translate.x / (WIDTH_GRID * scale)).toInt()
+        for (col in 0..Math.ceil((bottomRight.x - topLeft.x) / (WIDTH_GRID * scale)).toInt()) {
+            val x = (col * WIDTH_GRID * scale) + translate.x % (WIDTH_GRID * scale)
+            if (showGrid)
+                canvas.strokeLine(x, 0.0, x, height)
+            if (showGridNumber && (x > 48.0 )  && (everyLine || (col - colOffset) % 2 == 0))
+                canvas.fillText((col - colOffset).toString(), x, height - 16.0)
+        }
+
+        canvas.lineWidth = oldWidth
+    }
 
     private fun printAllPoints(paths: List<Path>, start: Point, startColor: Point.Color, target: Point?) {
         paths
@@ -133,7 +184,7 @@ class Plotter(
             drawLine(directedPoint.first.to2D(), getLineStart(directedPoint.first, it), COLOR.LINE)
         }
         if (directedPoint.first == start) {
-            drawLine(directedPoint.first.to2D(), directedPoint.first.to2D() - (0.0 to 0.5))
+            drawLine(directedPoint.first.to2D(), directedPoint.first.to2D() - (0.0 to 0.5), COLOR.LINE)
         }
 
         val background = when (directedPoint.first.getColor(start, startColor)) {
@@ -184,7 +235,8 @@ class Plotter(
 
     private fun printStraightPath(path: Path, attributes: Set<PathAttributes>) = drawLine(
             getLineStart(path.startPoint, path.startDirection),
-            getLineStart(path.endPoint, path.endDirection)
+            getLineStart(path.endPoint, path.endDirection),
+            COLOR.LINE
     )
 
     private fun printSamePointPath(path: Path, attributes: Set<PathAttributes>) = with(path) {
@@ -210,7 +262,7 @@ class Plotter(
 
                         drawArc(c1, radius, COLOR.LINE, if (startDirection == Direction.NORTH) 0.0 else 180.0, 180.0)
                         drawArc(c2, radius, COLOR.LINE, if (startDirection == Direction.SOUTH) 0.0 else 180.0, 180.0)
-                        drawLine(c1 + (shift to 0.0), c2 + (shift to 0.0))
+                        drawLine(c1 + (shift to 0.0), c2 + (shift to 0.0), COLOR.LINE)
                     }
                     Direction.EAST, Direction.WEST -> {
                         val shift = if (Direction.SOUTH in sides) radius else -radius
@@ -219,7 +271,7 @@ class Plotter(
 
                         drawArc(c1, radius, COLOR.LINE, if (startDirection == Direction.WEST) 90.0 else 270.0, 180.0)
                         drawArc(c2, radius, COLOR.LINE, if (startDirection == Direction.EAST) 90.0 else 270.0, 180.0)
-                        drawLine(c1 + (0.0 to shift), c2 + (0.0 to shift))
+                        drawLine(c1 + (0.0 to shift), c2 + (0.0 to shift), COLOR.LINE)
                     }
                 }
             }
@@ -273,9 +325,8 @@ class Plotter(
         canvas.stroke()
     }
 
-    private fun drawLine(start: Point2D, end: Point2D, color: Color? = null) {
-        if (color != null) // TODO: remove null
-            canvas.stroke = color
+    private fun drawLine(start: Point2D, end: Point2D, lineColor: Color) {
+        canvas.stroke = lineColor
 
         val s = transform(start)
         val e = transform(end)
@@ -283,11 +334,9 @@ class Plotter(
         canvas.strokeLine(s.x, s.y, e.x, e.y)
     }
 
-    private fun drawRect(bottomLeft: Point2D, size: Point2D, background: Color? = null, lineColor: Color? = null) {
-        if (lineColor != null) // TODO: remove null
-            canvas.stroke = lineColor
-        if (background != null) // TODO: remove null
-            canvas.fill = background
+    private fun drawRect(bottomLeft: Point2D, size: Point2D, background: Color, lineColor: Color) {
+        canvas.stroke = lineColor
+        canvas.fill = background
 
         val p = transform(bottomLeft)
         val s = size * (WIDTH_GRID * scale)
@@ -296,9 +345,8 @@ class Plotter(
         canvas.strokeRect(p.x, p.y, s.x, s.y)
     }
 
-    private fun drawCircle(center: Point2D, radius: Double, background: Color? = null) {
-        if (background != null)
-            canvas.fill = background
+    private fun drawCircle(center: Point2D, radius: Double, background: Color) {
+        canvas.fill = background
 
         val p = transform(center - (radius to -radius))
 
@@ -306,9 +354,8 @@ class Plotter(
         canvas.fillArc(p.x, p.y, r, r, 0.toDouble(), 360.toDouble(), ArcType.ROUND)
     }
 
-    private fun drawArc(center: Point2D, radius: Double, lineColor: Color? = null, start: Double, extend: Double) {
-        if (lineColor != null)
-            canvas.stroke = lineColor
+    private fun drawArc(center: Point2D, radius: Double, lineColor: Color, start: Double, extend: Double) {
+        canvas.stroke = lineColor
 
         val p = transform(center - (radius to -radius))
 
@@ -316,7 +363,7 @@ class Plotter(
         canvas.strokeArc(p.x, p.y, r, r, start, extend, ArcType.OPEN)
     }
 
-    private fun transform(point: Point2D) = Point2D(point.x, -point.y) * (WIDTH_GRID * scale) + translate
+    private fun transform(point: Point2D, trans:Point2D = translate) = Point2D(point.x, -point.y) * (WIDTH_GRID * scale) + trans
 
     companion object {
         const val WIDTH_GRID = 100
@@ -325,15 +372,12 @@ class Plotter(
         const val POINT_SHIFT = 0.28
         const val POINT_RADIUS = 0.25
 
-        const val SIZE_LINE = 4
-        const val SIZE_POINT_COLOR = 2
-        const val SIZE_POINT_UNKOWN = 3
-
         private object COLOR {
             val RED = Color.web("#F44336")
             val BLUE = Color.web("#3F51B5")
             val LINE = Color.web("#263238")
-            val GRID = Color.web("#ECEFF1")
+            val GRID = Color.web("#E0E0E0")
+            val GRID_NUMBER = Color.web("#C0C0C0")
             val BACKGROUND = Color.web("#FFFFFF")
             val ROBOT = Color.web("#FF9800")
             val TARGET = Color.web("#AED581")

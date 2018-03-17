@@ -46,11 +46,14 @@ class Planet(filePath: Path) {
         }
     }
 
-    fun plot(plotter: Plotter) = plotter.onUpdate(
-            name,
-            start,
-            paths.map { it to emptySet<PathAttributes>() },
-            target
-    )
+    fun plot(plotter: Plotter) {
+        plotter.onUpdate(
+                name,
+                start,
+                paths.map { it to emptySet<PathAttributes>() },
+                target
+        )
+        plotter.resetScroll(start)
+    }
 
 }

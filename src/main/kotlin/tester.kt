@@ -20,6 +20,8 @@ class MyView : View() {
     override val root = VBox()
 
     init {
+        val planet = PlanetProvider.getPlanet("large_staircase")
+
         val canvas = ResizeableCanvas()
         root += canvas
 
@@ -57,13 +59,12 @@ class MyView : View() {
                 KeyCode.PLUS -> plotter.zoomIn()
                 KeyCode.MINUS -> plotter.zoomOut()
                 KeyCode.DIGIT0, KeyCode.EQUALS -> plotter.zoomReset()
+                KeyCode.R -> plotter.resetScroll(planet.start)
                 else -> {
                 }
             }
         }
 
-
-        val planet = PlanetProvider.getPlanet("large_staircase")
         planet.plot(plotter)
     }
 }
