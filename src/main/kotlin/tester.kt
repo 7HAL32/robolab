@@ -20,7 +20,7 @@ class MyView : View() {
     override val root = VBox()
 
     init {
-        val planet = PlanetProvider.getPlanet("large_staircase")
+        val planet = PlanetProvider.getPlanet("small_ascii")
 
         val canvas = ResizeableCanvas()
         root += canvas
@@ -43,11 +43,15 @@ class MyView : View() {
             plotter.scroll(scroll.subtract(it.x, it.y).multiply((-1).toDouble()))
             scroll = Point2D(it.x, it.y)
         }
+        canvas.setOnMouseMoved {
+            val ev = plotter.testPointer(Point2D(it.x, it.y))
+        }
         canvas.setOnScroll {
             if (it.deltaY > 0)
                 plotter.zoomIn()
             else if (it.deltaY < 0)
                 plotter.zoomOut()
+            plotter.testPointer(Point2D(it.x, it.y))
         }
         val h = 20.0
         root.setOnKeyPressed {

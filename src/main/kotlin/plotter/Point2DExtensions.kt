@@ -22,4 +22,6 @@ operator fun Point2D.times(factor: Double): Point2D = multiply(factor)
 
 operator fun Point2D.times(factor: Int): Point2D = this * factor.toDouble()
 
+operator fun Point2D.times(point: Pair<Double, Double>): Point2D = Point2D(x * point.first, y * point.second)
+
 operator fun Point2D.unaryMinus() = this * -1
