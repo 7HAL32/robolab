@@ -1,5 +1,5 @@
 package plotter
 
 enum class PathAttributes {
-    ANIMATED, HIGHLIGHTED
+    ANIMATED, HIGHLIGHTED, EDITING
 }

@@ -11,15 +11,9 @@ import javafx.scene.text.TextAlignment
 import model.Direction
 import model.Path
 import model.Point
-import kotlin.Boolean
-import kotlin.Double
-import kotlin.Pair
-import kotlin.String
-import kotlin.let
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.to
 import kotlin.with
 
 /**
@@ -37,29 +31,69 @@ class Plotter(
 
     private var planetName = ""
     private var start: Point? = null
+    private var startColor: Point.Color = Point.Color.UNDEFINED
     private var paths = emptyList<Pair<Path, Set<PathAttributes>>>()
     private var target: Point? = null
 
     var showGrid: Boolean = true
         set(value) = drawAfter {
-            showGrid = value
+            field = value
         }
 
     var showGridNumber: Boolean = true
         set(value) = drawAfter {
-            showGridNumber = value
+            field = value
+        }
+
+    var editMode: Boolean = false
+        set(value) = drawAfter {
+            field = value
         }
 
     private var pointerEvent: PointerEvent = PointerEvent.NOTHING
 
+    val isPointHighlighted: Boolean
+        get() = pointerEvent.point != null
+
+    val isDirectionHighlighted: Boolean
+        get() = pointerEvent.direction != null
+
+    private var editStart: Pair<Point, Direction>? = null
+
+    val isPathEditing: Boolean
+        get() = editStart != null
+
+    fun startPathEditing() {
+        if (pointerEvent.point != null && pointerEvent.direction != null)
+            editStart = Pair(pointerEvent.point!!, pointerEvent.direction!!)
+    }
+
+    fun finishPathEditing(): Path? {
+        val ret = editStart?.let {
+            if (pointerEvent.point != null && pointerEvent.direction != null && (it.first != pointerEvent.point || it.second != pointerEvent.direction)) {
+                Path(it.first, it.second, pointerEvent.point!!, pointerEvent.direction!!)
+            } else {
+                null
+            }
+        }
+        editStart = null
+        return ret
+    }
+
     override fun onUpdate(
             planetName: String,
             start: Point,
+            startColor: Point.Color,
             paths: List<Pair<Path, Set<PathAttributes>>>,
             target: Point?
     ) {
+        if (this.planetName != planetName) {
+            resetScroll(start)
+        }
+
         this.planetName = planetName
         this.start = start
+        this.startColor = startColor
         this.paths = paths
         this.target = target
 
@@ -76,24 +110,47 @@ class Plotter(
         clear()
         printGrid()
 
+
         start?.let {
+            if (editMode)
+                printVisiblePoints(it, startColor, target)
+
             printAllPoints(
                     paths.map { it.first },
                     it,
-                    Point.Color.RED,
+                    startColor,
                     target
             )
 
             paths.forEach {
                 printPath(it.first, it.second)
             }
+
+            if (isPathEditing && pointerEvent.point != null && pointerEvent.direction != null) {
+                editStart?.let {
+                    val p = Path(it.first, it.second, pointerEvent.point!!, pointerEvent.direction!!)
+                    printPath(p, setOf(PathAttributes.EDITING))
+                }
+            }
         }
     }
 
-    private fun <T> drawAfter(block: () -> T): T {
+    private fun <T> drawAfter(block: () -> T) {
         val h = block()
         draw()
-        return h
+
+        editStart?.let {
+            if (h is Point2D) {
+                canvas.stroke = COLOR.LINE
+
+                val s = transform(getLineStart(it.first, it.second))
+                val e:Point2D = h
+
+                canvas.setLineDashes(4.0, 6.0)
+                canvas.strokeLine(s.x, s.y, e.x, e.y)
+                canvas.setLineDashes(0.0)
+            }
+        }
     }
 
     fun scroll(d: Point2D) = drawAfter {
@@ -102,6 +159,7 @@ class Plotter(
 
     fun resetScroll(point: Point) = drawAfter {
         translate = Point2D(width / 2, height * 2 / 3) - transform(point.to2D(), Point2D.ZERO)
+        pointerEvent = PointerEvent.NOTHING
     }
 
     fun zoomIn() = drawAfter {
@@ -125,7 +183,7 @@ class Plotter(
         pointerEvent = PointerEvent.NOTHING
     }
 
-    fun testPointer(point: Point2D): PointerEvent = drawAfter {
+    fun testPointer(point: Point2D) = drawAfter {
         val p = (translate - point) * (-1.0 to 1.0)
         val x = p.x / (WIDTH_GRID * scale)
         val y = p.y / (WIDTH_GRID * scale)
@@ -154,7 +212,7 @@ class Plotter(
             )
             else -> PointerEvent.NOTHING
         }
-        pointerEvent
+        point
     }
 
     private fun clear() = canvas.clearRect(0.0, 0.0, width, height)
@@ -175,25 +233,39 @@ class Plotter(
         val gridWidth = WIDTH_GRID * scale
         val everyLine = gridWidth > canvas.font.size
 
-        val rowOffset = Math.floor(translate.y / (WIDTH_GRID * scale)).toInt()
+        val rowOffset = (translate.y / (WIDTH_GRID * scale)).toInt()
         for (row in 0..Math.ceil((bottomRight.y - topLeft.y) / (WIDTH_GRID * scale)).toInt()) {
             val y = (row * WIDTH_GRID * scale) + translate.y % (WIDTH_GRID * scale)
             if (showGrid)
                 canvas.strokeLine(0.0, y, width, y)
-            if (showGridNumber && (y < height - 32.0) && (everyLine || (rowOffset - row) % 2 == 0))
+            if (showGridNumber && (y < height - 72.0) && (everyLine || (rowOffset - row) % 2 == 0))
                 canvas.fillText((rowOffset - row).toString(), 24.0, y)
         }
 
-        val colOffset = Math.floor(translate.x / (WIDTH_GRID * scale)).toInt()
+        val colOffset = (translate.x / (WIDTH_GRID * scale)).toInt()
         for (col in 0..Math.ceil((bottomRight.x - topLeft.x) / (WIDTH_GRID * scale)).toInt()) {
             val x = (col * WIDTH_GRID * scale) + translate.x % (WIDTH_GRID * scale)
             if (showGrid)
                 canvas.strokeLine(x, 0.0, x, height)
             if (showGridNumber && (x > 48.0) && (everyLine || (col - colOffset) % 2 == 0))
-                canvas.fillText((col - colOffset).toString(), x, height - 16.0)
+                canvas.fillText((col - colOffset).toString(), x, height - 56.0)
         }
 
         canvas.lineWidth = oldWidth
+    }
+
+    private fun printVisiblePoints(start: Point, startColor: Point.Color, target: Point?) {
+        val topLeft = Point2D(translate.x, translate.y)
+        val bottomRight = topLeft + (width to height)
+
+        val rowOffset = (translate.y / (WIDTH_GRID * scale)).toInt()
+        val colOffset = (translate.x / (WIDTH_GRID * scale)).toInt()
+        for (row in -1..Math.ceil((bottomRight.y - topLeft.y) / (WIDTH_GRID * scale)).toInt()) {
+            for (col in -1..Math.ceil((bottomRight.x - topLeft.x) / (WIDTH_GRID * scale)).toInt()) {
+                val p = Point(col - colOffset, rowOffset - row)
+                printPoint(DirectedPoint(p, emptySet()), start, startColor, target == p, false)
+            }
+        }
     }
 
     private fun printAllPoints(paths: List<Path>, start: Point, startColor: Point.Color, target: Point?) {
@@ -209,6 +281,15 @@ class Plotter(
                     it.value
                             .map { it.second }
                             .toSet()
+                }.let {
+                    val h = it.toMutableMap()
+                    if (!h.containsKey(start)) {
+                        h[start] = emptySet()
+                    }
+                    if (!h.containsKey(target) && target != null) {
+                        h[target] = emptySet()
+                    }
+                    h.toMap()
                 }
                 .forEach {
                     printPoint(
@@ -220,7 +301,7 @@ class Plotter(
                 }
     }
 
-    private fun printPoint(directedPoint: DirectedPoint, start: Point, startColor: Point.Color, isTarget: Boolean) {
+    private fun printPoint(directedPoint: DirectedPoint, start: Point, startColor: Point.Color, isTarget: Boolean, isUsed: Boolean = true) {
         if (isTarget) {
             drawCircle(directedPoint.first.to2D(), POINT_RADIUS, COLOR.TARGET)
         }
@@ -232,18 +313,30 @@ class Plotter(
             drawLine(directedPoint.first.to2D(), getLineStart(directedPoint.first, it), COLOR.LINE)
         }
 
-        if (pointerEvent.point == directedPoint.first && pointerEvent.direction != null) {
-
+        if (pointerEvent.point == directedPoint.first) {
             pointerEvent.direction?.let {
                 drawLine(directedPoint.first.to2D(), getLineStart(directedPoint.first, it), COLOR.HIGHLIGHT, LineType.THICK)
             }
         }
-
-        val background = when (directedPoint.first.getColor(start, startColor)) {
-            Point.Color.RED -> COLOR.RED
-            Point.Color.BLUE -> COLOR.BLUE
-            Point.Color.UNDEFINED -> COLOR.BACKGROUND
+        if (editStart?.first == directedPoint.first) {
+            editStart?.let {
+                drawLine(directedPoint.first.to2D(), getLineStart(directedPoint.first, it.second), COLOR.HIGHLIGHT, LineType.THICK)
+            }
         }
+
+        val background = when (isUsed) {
+            true -> when (directedPoint.first.getColor(start, startColor)) {
+                Point.Color.RED -> COLOR.RED
+                Point.Color.BLUE -> COLOR.BLUE
+                Point.Color.UNDEFINED -> COLOR.BACKGROUND
+            }
+            false -> when (directedPoint.first.getColor(start, startColor)) {
+                Point.Color.RED -> COLOR.RED_LIGHT
+                Point.Color.BLUE -> COLOR.BLUE_LIGHT
+                Point.Color.UNDEFINED -> COLOR.BACKGROUND
+            }
+        }
+
 
         drawRect(
                 directedPoint.first.to2D() - (POINT_SIZE / 2 to -POINT_SIZE / 2),
@@ -314,6 +407,11 @@ class Plotter(
         return radius * Math.PI / 4
     }
 
+    private fun getPathLineColor(attributes: Set<PathAttributes>): Color = when {
+        attributes.contains(PathAttributes.EDITING) -> COLOR.LINE_LIGHT
+        else -> COLOR.LINE
+    }
+
     private fun printPathSamePoint(path: Path, attributes: Set<PathAttributes>) = with(path) {
         val radius = 0.3
         val s = getLineStart(startPoint, startDirection, radius)
@@ -322,7 +420,7 @@ class Plotter(
         when {
             isSameDirection() -> {
                 val lineHalf = 0.1
-                drawLine(getLineStart(startPoint, startDirection), s, COLOR.LINE)
+                drawLine(getLineStart(startPoint, startDirection), s, getPathLineColor(attributes))
                 val (x1, x2) = when (path.startDirection) {
                     Direction.NORTH, Direction.SOUTH -> (s - (lineHalf to 0.0)) to (s + (lineHalf to 0.0))
                     Direction.EAST, Direction.WEST -> (s - (0.0 to lineHalf)) to (s + (0.0 to lineHalf))
@@ -334,8 +432,8 @@ class Plotter(
                 canvas.lineWidth = oldSize
             }
             isOppositeDirection() -> {
-                drawLine(getLineStart(startPoint, startDirection), s, COLOR.LINE)
-                drawLine(getLineStart(endPoint, endDirection), e, COLOR.LINE)
+                drawLine(getLineStart(startPoint, startDirection), s, getPathLineColor(attributes))
+                drawLine(getLineStart(endPoint, endDirection), e, getPathLineColor(attributes))
                 val sides = getUsedPointSides(path.startPoint)
                 when (startDirection) {
                     Direction.NORTH, Direction.SOUTH -> {
@@ -343,11 +441,11 @@ class Plotter(
                         val c1 = s + (shift to 0.0)
                         val c2 = e + (shift to 0.0)
 
-                        drawArc(c1, radius, COLOR.LINE, if (startDirection == Direction.NORTH) 0.0 else 180.0, 180.0)
-                        drawArc(c2, radius, COLOR.LINE, if (startDirection == Direction.SOUTH) 0.0 else 180.0, 180.0)
+                        drawArc(c1, radius, getPathLineColor(attributes), if (startDirection == Direction.NORTH) 0.0 else 180.0, 180.0)
+                        drawArc(c2, radius, getPathLineColor(attributes), if (startDirection == Direction.SOUTH) 0.0 else 180.0, 180.0)
                         val start = c1 + (shift to 0.0)
                         val end = c2 + (shift to 0.0)
-                        drawLine(start, end, COLOR.LINE)
+                        drawLine(start, end, getPathLineColor(attributes))
 
                         if (path.weight ?: 1 < 0) {
                             val lineHalf = 0.1
@@ -365,11 +463,11 @@ class Plotter(
                         val c1 = s + (0.0 to shift)
                         val c2 = e + (0.0 to shift)
 
-                        drawArc(c1, radius, COLOR.LINE, if (startDirection == Direction.WEST) 90.0 else 270.0, 180.0)
-                        drawArc(c2, radius, COLOR.LINE, if (startDirection == Direction.EAST) 90.0 else 270.0, 180.0)
+                        drawArc(c1, radius, getPathLineColor(attributes), if (startDirection == Direction.WEST) 90.0 else 270.0, 180.0)
+                        drawArc(c2, radius, getPathLineColor(attributes), if (startDirection == Direction.EAST) 90.0 else 270.0, 180.0)
                         val start = c1 + (0.0 to shift)
                         val end = c2 + (0.0 to shift)
-                        drawLine(c1 + (0.0 to shift), c2 + (0.0 to shift), COLOR.LINE)
+                        drawLine(c1 + (0.0 to shift), c2 + (0.0 to shift), getPathLineColor(attributes))
 
                         if (path.weight ?: 1 < 0) {
                             val lineHalf = 0.1
@@ -385,8 +483,8 @@ class Plotter(
                 }
             }
             else -> {
-                drawLine(getLineStart(startPoint, startDirection), s, COLOR.LINE)
-                drawLine(getLineStart(endPoint, endDirection), e, COLOR.LINE)
+                drawLine(getLineStart(startPoint, startDirection), s, getPathLineColor(attributes))
+                drawLine(getLineStart(endPoint, endDirection), e, getPathLineColor(attributes))
                 val p1 = Point2D(s.x, e.y)
                 val p2 = Point2D(e.x, s.y)
 
@@ -399,7 +497,7 @@ class Plotter(
                     else -> 0
                 }
 
-                drawArc(center, radius, COLOR.LINE, start.toDouble(), 270.0)
+                drawArc(center, radius, getPathLineColor(attributes), start.toDouble(), 270.0)
 
                 if (path.weight ?: 1 < 0) {
                     val lineHalf = radiusToShift(0.1)
@@ -441,7 +539,7 @@ class Plotter(
         val step = 10.0 / (s.distance(e) * WIDTH_GRID * scale)
         var t = step
 
-        canvas.stroke = COLOR.LINE
+        canvas.stroke = getPathLineColor(attributes)
         canvas.beginPath()
         val h1 = transform(s)
         canvas.moveTo(h1.x, h1.y)
@@ -533,8 +631,11 @@ class Plotter(
 
         private object COLOR {
             val RED = Color.web("#F44336")
+            val RED_LIGHT = Color.web("#FFEBEE")
             val BLUE = Color.web("#3F51B5")
+            val BLUE_LIGHT = Color.web("#E8EAF6")
             val LINE = Color.web("#263238")
+            val LINE_LIGHT = Color.web("#607D8B")
             val GRID = Color.web("#E0E0E0")
             val GRID_NUMBER = Color.web("#C0C0C0")
             val BACKGROUND = Color.web("#FFFFFF")

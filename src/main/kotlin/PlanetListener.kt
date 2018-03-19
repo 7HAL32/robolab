@@ -9,6 +9,7 @@ interface PlanetListener {
     fun onUpdate(
             planetName: String,
             start: Point,
+            startColor: Point.Color,
             paths: List<Pair<Path, Set<PathAttributes>>>,
             target: Point?
     )

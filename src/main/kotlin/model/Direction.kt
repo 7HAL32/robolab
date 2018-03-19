@@ -9,6 +9,13 @@ enum class Direction {
     SOUTH,
     WEST;
 
+    fun export():String = when(this) {
+        Direction.NORTH -> "N"
+        Direction.EAST -> "E"
+        Direction.SOUTH -> "S"
+        Direction.WEST -> "W"
+    }
+
     companion object {
 
         fun parse(direction: String) = when (direction.toLowerCase()) {

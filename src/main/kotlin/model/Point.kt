@@ -14,7 +14,7 @@ data class Point(
     fun getColor(reference: Point, color: Color) = when {
         color == Color.UNDEFINED || (x + reference.x + y + reference.y) % 2 == 0 -> color
         color == Color.RED -> Color.BLUE
-        else -> Color.BLUE
+        else -> Color.RED
     }
 
     enum class Color {
