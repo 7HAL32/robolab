@@ -122,6 +122,18 @@ class MyView : View() {
         }
         toolbar += undo
 
+        val toggleGrid = Button("Toggle grid")
+        toggleGrid.setOnAction {
+            plotter.showGrid = !plotter.showGrid
+        }
+        toolbar += toggleGrid
+
+        val toggleGridNumber = Button("Toggle grid number")
+        toggleGridNumber.setOnAction {
+            plotter.showGridNumber = !plotter.showGridNumber
+        }
+        toolbar += toggleGridNumber
+
         val borderPane = BorderPane()
         borderPane.center = canvas
         borderPane.top = toolbar

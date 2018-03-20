@@ -50,9 +50,6 @@ class Plotter(
 
     private var pointerEvent: PointerEvent = PointerEvent.NOTHING
 
-    val isPointHighlighted: Boolean
-        get() = pointerEvent.point != null
-
     val isDirectionHighlighted: Boolean
         get() = pointerEvent.direction != null
 
@@ -165,12 +162,12 @@ class Plotter(
         pointerEvent = PointerEvent.NOTHING
     }
 
-    private fun mousePointToModelPoint(point: Point2D):Point2D {
+    private fun mousePointToModelPoint(point: Point2D): Point2D {
         val p = (translate - point) * (-1.0 to 1.0)
         return Point2D(p.x / (WIDTH_GRID * scale), p.y / (WIDTH_GRID * scale))
     }
 
-    fun zoomIn(zoomTo:Point2D = Point2D(width / 2, height / 2)) = drawAfter {
+    fun zoomIn(zoomTo: Point2D = Point2D(width / 2, height / 2)) = drawAfter {
         val dataPoint = mousePointToModelPoint(zoomTo)
         if (scale < 1.0)
             scale += 0.05
@@ -181,7 +178,7 @@ class Plotter(
         translate -= (newPoint - zoomTo)
     }
 
-    fun zoomOut(zoomTo:Point2D = Point2D(width / 2, height / 2)) = drawAfter {
+    fun zoomOut(zoomTo: Point2D = Point2D(width / 2, height / 2)) = drawAfter {
         val dataPoint = mousePointToModelPoint(zoomTo)
         if (scale > 1.0)
             scale -= 0.1
@@ -191,9 +188,12 @@ class Plotter(
         translate -= (newPoint - zoomTo)
     }
 
-    fun zoomReset() = drawAfter {
+    fun zoomReset(zoomTo: Point2D = Point2D(width / 2, height / 2)) = drawAfter {
+        val dataPoint = mousePointToModelPoint(zoomTo)
         scale = 1.0
         pointerEvent = PointerEvent.NOTHING
+        val newPoint = transform(dataPoint)
+        translate -= (newPoint - zoomTo)
     }
 
     fun testPointer(point: Point2D) = drawAfter {
@@ -405,18 +405,26 @@ class Plotter(
                 getLineColor(path, attributes)
         )
 
+        val s = (start + end) * 0.5
+        val (x1, x2) = when (path.startDirection) {
+            Direction.NORTH, Direction.SOUTH -> (s - (LINE_HALF to 0.0)) to (s + (LINE_HALF to 0.0))
+            Direction.EAST, Direction.WEST -> (s - (0.0 to LINE_HALF)) to (s + (0.0 to LINE_HALF))
+        }
         if (path.weight ?: 1 < 0) {
-            val lineHalf = 0.1
-            val s = (start + end) * 0.5
-            val (x1, x2) = when (path.startDirection) {
-                Direction.NORTH, Direction.SOUTH -> (s - (lineHalf to 0.0)) to (s + (lineHalf to 0.0))
-                Direction.EAST, Direction.WEST -> (s - (0.0 to lineHalf)) to (s + (0.0 to lineHalf))
-            }
-
             val oldSize = canvas.lineWidth
             canvas.lineWidth = 3.0
             drawLine(x1, x2, COLOR.BLOCKED)
             canvas.lineWidth = oldSize
+        } else {
+            path.weight?.let {
+                canvas.fill = COLOR.WEIGHT
+                canvas.textAlign = TextAlignment.CENTER
+                canvas.textBaseline = VPos.CENTER
+                canvas.font = Font.font(12.0)
+
+                val x3 = transform(x1)
+                canvas.fillText(it.toString(), x3.x, x3.y)
+            }
         }
     }
 
@@ -431,11 +439,10 @@ class Plotter(
 
         when {
             isSameDirection() -> {
-                val lineHalf = 0.1
                 drawLine(getLineStart(startPoint, startDirection), s, getLineColor(path, attributes))
                 val (x1, x2) = when (path.startDirection) {
-                    Direction.NORTH, Direction.SOUTH -> (s - (lineHalf to 0.0)) to (s + (lineHalf to 0.0))
-                    Direction.EAST, Direction.WEST -> (s - (0.0 to lineHalf)) to (s + (0.0 to lineHalf))
+                    Direction.NORTH, Direction.SOUTH -> (s - (LINE_HALF to 0.0)) to (s + (LINE_HALF to 0.0))
+                    Direction.EAST, Direction.WEST -> (s - (0.0 to LINE_HALF)) to (s + (0.0 to LINE_HALF))
                 }
 
                 val oldSize = canvas.lineWidth
@@ -459,15 +466,25 @@ class Plotter(
                         val end = c2 + (shift to 0.0)
                         drawLine(start, end, getLineColor(path, attributes))
 
+                        val s1 = (start + end) * 0.5
+                        val (x1, x2) = ((s1 - (LINE_HALF to 0.0)) to (s1 + (LINE_HALF to 0.0))).let {
+                            if (it.first < it.second) it else it.second to it.first
+                        }
                         if (path.weight ?: 1 < 0) {
-                            val lineHalf = 0.1
-                            val s1 = (start + end) * 0.5
-                            val (x1, x2) = (s1 - (lineHalf to 0.0)) to (s1 + (lineHalf to 0.0))
-
                             val oldSize = canvas.lineWidth
                             canvas.lineWidth = 3.0
                             drawLine(x1, x2, COLOR.BLOCKED)
                             canvas.lineWidth = oldSize
+                        } else {
+                            path.weight?.let {
+                                canvas.fill = COLOR.WEIGHT
+                                canvas.textAlign = TextAlignment.CENTER
+                                canvas.textBaseline = VPos.CENTER
+                                canvas.font = Font.font(12.0)
+
+                                val x3 = transform(x1)
+                                canvas.fillText(it.toString(), x3.x, x3.y)
+                            }
                         }
                     }
                     Direction.EAST, Direction.WEST -> {
@@ -481,15 +498,25 @@ class Plotter(
                         val end = c2 + (0.0 to shift)
                         drawLine(c1 + (0.0 to shift), c2 + (0.0 to shift), getLineColor(path, attributes))
 
+                        val s1 = (start + end) * 0.5
+                        val (x1, x2) = ((s1 - (0.0 to LINE_HALF)) to (s1 + (0.0 to LINE_HALF))).let {
+                            if (it.first < it.second) it else it.second to it.first
+                        }
                         if (path.weight ?: 1 < 0) {
-                            val lineHalf = 0.1
-                            val s1 = (start + end) * 0.5
-                            val (x1, x2) = (s1 - (0.0 to lineHalf)) to (s1 + (0.0 to lineHalf))
-
                             val oldSize = canvas.lineWidth
                             canvas.lineWidth = 3.0
                             drawLine(x1, x2, COLOR.BLOCKED)
                             canvas.lineWidth = oldSize
+                        } else {
+                            path.weight?.let {
+                                canvas.fill = COLOR.WEIGHT
+                                canvas.textAlign = TextAlignment.CENTER
+                                canvas.textBaseline = VPos.CENTER
+                                canvas.font = Font.font(12.0)
+
+                                val x3 = transform(x1)
+                                canvas.fillText(it.toString(), x3.x, x3.y)
+                            }
                         }
                     }
                 }
@@ -511,24 +538,35 @@ class Plotter(
 
                 drawArc(center, radius, getLineColor(path, attributes), start.toDouble(), 270.0)
 
+                val LINE_HALF = radiusToShift(LINE_HALF)
+                val rs = radiusToShift(radius)
+                val c = when (start) {
+                    0 -> center + (-rs to rs)
+                    90 -> center + (-rs to -rs)
+                    180 -> center + (rs to -rs)
+                    else -> center + (rs to rs)
+                }
+                val (x1, x2) = when (start) {
+                    0, 180 -> (c - (-LINE_HALF to LINE_HALF)) to (c + (-LINE_HALF to LINE_HALF))
+                    else -> (c - (LINE_HALF to LINE_HALF)) to (c + (LINE_HALF to LINE_HALF))
+                }.let {
+                    if (it.first < it.second) it else it.second to it.first
+                }
                 if (path.weight ?: 1 < 0) {
-                    val lineHalf = radiusToShift(0.1)
-                    val rs = radiusToShift(radius)
-                    val c = when (start) {
-                        0 -> center + (-rs to rs)
-                        90 -> center + (-rs to -rs)
-                        180 -> center + (rs to -rs)
-                        else -> center + (rs to rs)
-                    }
-                    val (x1, x2) = when (start) {
-                        0, 180 -> (c - (-lineHalf to lineHalf)) to (c + (-lineHalf to lineHalf))
-                        else -> (c - (lineHalf to lineHalf)) to (c + (lineHalf to lineHalf))
-                    }
-
                     val oldSize = canvas.lineWidth
                     canvas.lineWidth = 3.0
                     drawLine(x1, x2, COLOR.BLOCKED)
                     canvas.lineWidth = oldSize
+                } else {
+                    path.weight?.let {
+                        canvas.fill = COLOR.WEIGHT
+                        canvas.textAlign = TextAlignment.CENTER
+                        canvas.textBaseline = VPos.CENTER
+                        canvas.font = Font.font(12.0)
+
+                        val x3 = transform(x1)
+                        canvas.fillText(it.toString(), x3.x, x3.y)
+                    }
                 }
             }
         }
@@ -567,21 +605,31 @@ class Plotter(
         canvas.stroke()
 
 
-        if (path.weight ?: 1 < 0) {
-            val lineHalf = 0.1
-            val c = calcBezier(s, sd, ed, e, 0.5)
-            val dir = (calcBezier(s, sd, ed, e, 0.49) - calcBezier(s, sd, ed, e, 0.51)).let {
-                Point2D(it.y, -it.x).normalize()
-            } * lineHalf
-            val (x1, x2) = when (path.startDirection) {
-                Direction.NORTH, Direction.SOUTH -> (c - (lineHalf to 0.0)) to (c + (lineHalf to 0.0))
-                Direction.EAST, Direction.WEST -> (c - dir) to (c + dir)
-            }
+        val c = calcBezier(s, sd, ed, e, 0.5)
+        val (bezierBefore, beziereAfter) =
+                (calcBezier(s, sd, ed, e, 0.49) to calcBezier(s, sd, ed, e, 0.51))
 
+        val dir = (bezierBefore - beziereAfter).let {
+            Point2D(it.y, -it.x).normalize()
+        } * LINE_HALF
+        val (x1, x2) = ((c - dir) to (c + dir)).let {
+            if (it.first < it.second) it else it.second to it.first
+        }
+        if (path.weight ?: 1 < 0) {
             val oldSize = canvas.lineWidth
             canvas.lineWidth = 3.0
             drawLine(x1, x2, COLOR.BLOCKED)
             canvas.lineWidth = oldSize
+        } else {
+            path.weight?.let {
+                canvas.fill = COLOR.WEIGHT
+                canvas.textAlign = TextAlignment.CENTER
+                canvas.textBaseline = VPos.CENTER
+                canvas.font = Font.font(12.0)
+
+                val x3 = transform(x1)
+                canvas.fillText(it.toString(), x3.x, x3.y)
+            }
         }
     }
 
@@ -641,20 +689,23 @@ class Plotter(
         const val POINT_SHIFT = 0.28
         const val POINT_RADIUS = 0.25
 
+        const val LINE_HALF = 0.1
+
         private object COLOR {
-            val RED = Color.web("#F44336")
-            val RED_LIGHT = Color.web("#FFEBEE")
-            val BLUE = Color.web("#3F51B5")
-            val BLUE_LIGHT = Color.web("#E8EAF6")
-            val LINE = Color.web("#263238")
-            val LINE_LIGHT = Color.web("#607D8B")
-            val GRID = Color.web("#E0E0E0")
-            val GRID_NUMBER = Color.web("#C0C0C0")
-            val BACKGROUND = Color.web("#FFFFFF")
-            val ROBOT = Color.web("#FF9800")
-            val TARGET = Color.web("#AED581")
-            val BLOCKED = Color.web("#F44336")
-            val HIGHLIGHT = Color.web("#009688")
+            val RED: Color = Color.web("#F44336")
+            val RED_LIGHT: Color = Color.web("#FFEBEE")
+            val BLUE: Color = Color.web("#3F51B5")
+            val BLUE_LIGHT: Color = Color.web("#E8EAF6")
+            val LINE: Color = Color.web("#263238")
+            val LINE_LIGHT: Color = Color.web("#607D8B")
+            val GRID: Color = Color.web("#E0E0E0")
+            val GRID_NUMBER: Color = Color.web("#C0C0C0")
+            val BACKGROUND: Color = Color.web("#FFFFFF")
+            val ROBOT: Color = Color.web("#FF9800")
+            val TARGET: Color = Color.web("#AED581")
+            val BLOCKED: Color = Color.web("#F44336")
+            val HIGHLIGHT: Color = Color.web("#009688")
+            val WEIGHT: Color = Color.web("#666666")
         }
     }
 

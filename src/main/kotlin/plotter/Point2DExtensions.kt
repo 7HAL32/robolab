@@ -26,4 +26,6 @@ operator fun Point2D.times(point: Pair<Double, Double>): Point2D = Point2D(x * p
 
 operator fun Point2D.unaryMinus() = this * -1
 
+operator fun Point2D.compareTo(other: Point2D) = (x + y).compareTo(other.x + other.y)
+
 fun Point2D.toPair() = Pair(x, y)
