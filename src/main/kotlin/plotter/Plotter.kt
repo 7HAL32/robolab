@@ -100,11 +100,16 @@ class Plotter(
         draw()
     }
 
+    var heightReduce:Double = 0.0
+        set(value) = drawAfter {
+            field = value
+        }
+
     private val width: Double
         get() = canvas.canvas.width
 
     private val height: Double
-        get() = canvas.canvas.height
+        get() = canvas.canvas.height - heightReduce
 
     fun draw() {
         clear()
@@ -238,7 +243,7 @@ class Plotter(
             val y = (row * WIDTH_GRID * scale) + translate.y % (WIDTH_GRID * scale)
             if (showGrid)
                 canvas.strokeLine(0.0, y, width, y)
-            if (showGridNumber && (y < height - 72.0) && (everyLine || (rowOffset - row) % 2 == 0))
+            if (showGridNumber && (y < height - 32.0) && (everyLine || (rowOffset - row) % 2 == 0))
                 canvas.fillText((rowOffset - row).toString(), 24.0, y)
         }
 
@@ -248,7 +253,7 @@ class Plotter(
             if (showGrid)
                 canvas.strokeLine(x, 0.0, x, height)
             if (showGridNumber && (x > 48.0) && (everyLine || (col - colOffset) % 2 == 0))
-                canvas.fillText((col - colOffset).toString(), x, height - 56.0)
+                canvas.fillText((col - colOffset).toString(), x, height - 15.0)
         }
 
         canvas.lineWidth = oldWidth

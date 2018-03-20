@@ -33,6 +33,9 @@ class MyView : View() {
         val plotter = Plotter(canvas.graphicsContext2D)
 
         val toolbar = ToolBar()
+        toolbar.heightProperty().onChange {
+            plotter.heightReduce = it
+        }
         val editMode = Button("Enable edit mode")
         editMode.setOnMouseClicked {
             if (plotter.editMode) {
