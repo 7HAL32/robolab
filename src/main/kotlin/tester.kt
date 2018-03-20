@@ -37,7 +37,7 @@ class MyView : View() {
             plotter.heightReduce = it
         }
         val editMode = Button("Enable edit mode")
-        editMode.setOnMouseClicked {
+        editMode.setOnAction {
             if (plotter.editMode) {
                 editMode.text = "Enable edit mode"
                 plotter.editMode = false
@@ -49,7 +49,7 @@ class MyView : View() {
         toolbar += editMode
 
         val testPlanet = Button("Load planet")
-        testPlanet.setOnMouseClicked {
+        testPlanet.setOnAction {
             val dialog = ChoiceDialog("", PlanetProvider.planets.map {
                 it.fileName.toString().replace(".planet", "")
             })
@@ -68,7 +68,7 @@ class MyView : View() {
         toolbar += testPlanet
 
         val newPlanet = Button("Create planet")
-        newPlanet.setOnMouseClicked {
+        newPlanet.setOnAction {
             val dialog = TextInputDialog("0,0")
             dialog.title = "Create new planet"
             dialog.headerText = "Create new planet"
@@ -84,13 +84,13 @@ class MyView : View() {
         toolbar += newPlanet
 
         val exportPlanet = Button("Export")
-        exportPlanet.setOnMouseClicked {
+        exportPlanet.setOnAction {
             planet.last().export()
         }
         toolbar += exportPlanet
 
         val startColor = Button("Set start color")
-        startColor.setOnMouseClicked {
+        startColor.setOnAction {
             val dialog = ChoiceDialog(planet.last().startColor.toString(), listOf(
                     Point.Color.UNDEFINED.toString(),
                     Point.Color.RED.toString(),
@@ -114,7 +114,7 @@ class MyView : View() {
         toolbar += startColor
 
         val undo = Button("Undo")
-        undo.setOnMouseClicked {
+        undo.setOnAction {
             if (planet.size > 1) {
                 planet.removeAt(planet.size - 1)
                 planet.last().plot(plotter)
@@ -172,10 +172,10 @@ class MyView : View() {
         val h = 20.0
         root.setOnKeyPressed {
             when (it.code) {
-                KeyCode.UP -> plotter.scroll(Point2D(0.0, -h))
-                KeyCode.DOWN -> plotter.scroll(Point2D(0.0, h))
-                KeyCode.LEFT -> plotter.scroll(Point2D(-h, 0.0))
-                KeyCode.RIGHT -> plotter.scroll(Point2D(h, 0.0))
+                KeyCode.UP -> plotter.scroll(Point2D(0.0, h))
+                KeyCode.DOWN -> plotter.scroll(Point2D(0.0, -h))
+                KeyCode.LEFT -> plotter.scroll(Point2D(h, 0.0))
+                KeyCode.RIGHT -> plotter.scroll(Point2D(-h, 0.0))
                 KeyCode.PLUS -> plotter.zoomIn()
                 KeyCode.MINUS -> plotter.zoomOut()
                 KeyCode.DIGIT0, KeyCode.EQUALS -> plotter.zoomReset()
