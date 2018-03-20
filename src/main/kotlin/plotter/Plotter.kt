@@ -156,7 +156,7 @@ class Plotter(
         }
     }
 
-    fun scroll(d: Point2D) = drawAfter {
+    fun scrollBy(d: Point2D) = drawAfter {
         translate += d
     }
 
@@ -165,20 +165,30 @@ class Plotter(
         pointerEvent = PointerEvent.NOTHING
     }
 
-    fun zoomIn() = drawAfter {
+    private fun mousePointToModelPoint(point: Point2D):Point2D {
+        val p = (translate - point) * (-1.0 to 1.0)
+        return Point2D(p.x / (WIDTH_GRID * scale), p.y / (WIDTH_GRID * scale))
+    }
+
+    fun zoomIn(zoomTo:Point2D = Point2D(width / 2, height / 2)) = drawAfter {
+        val dataPoint = mousePointToModelPoint(zoomTo)
         if (scale < 1.0)
             scale += 0.05
         else
             scale = min(10.0, scale + 0.1)
-        pointerEvent = PointerEvent.NOTHING
+        val newPoint = transform(dataPoint)
+
+        translate -= (newPoint - zoomTo)
     }
 
-    fun zoomOut() = drawAfter {
+    fun zoomOut(zoomTo:Point2D = Point2D(width / 2, height / 2)) = drawAfter {
+        val dataPoint = mousePointToModelPoint(zoomTo)
         if (scale > 1.0)
             scale -= 0.1
         else
             scale = max(0.1, scale - 0.05)
-        pointerEvent = PointerEvent.NOTHING
+        val newPoint = transform(dataPoint)
+        translate -= (newPoint - zoomTo)
     }
 
     fun zoomReset() = drawAfter {
@@ -187,9 +197,7 @@ class Plotter(
     }
 
     fun testPointer(point: Point2D) = drawAfter {
-        val p = (translate - point) * (-1.0 to 1.0)
-        val x = p.x / (WIDTH_GRID * scale)
-        val y = p.y / (WIDTH_GRID * scale)
+        val (x, y) = mousePointToModelPoint(point).toPair()
 
         val col = Math.round(x).toInt()
         val dx = Math.abs(x - col)

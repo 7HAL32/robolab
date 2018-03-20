@@ -145,7 +145,7 @@ class MyView : View() {
             if (plotter.isPathEditing) {
                 plotter.testPointer(Point2D(it.x, it.y))
             } else {
-                plotter.scroll(scroll.subtract(it.x, it.y).multiply((-1).toDouble()))
+                plotter.scrollBy(scroll.subtract(it.x, it.y).multiply((-1).toDouble()))
                 scroll = Point2D(it.x, it.y)
             }
         }
@@ -164,18 +164,17 @@ class MyView : View() {
         }
         canvas.setOnScroll {
             if (it.deltaY > 0)
-                plotter.zoomIn()
+                plotter.zoomIn(Point2D(it.x, it.y))
             else if (it.deltaY < 0)
-                plotter.zoomOut()
-            plotter.testPointer(Point2D(it.x, it.y))
+                plotter.zoomOut(Point2D(it.x, it.y))
         }
         val h = 20.0
         root.setOnKeyPressed {
             when (it.code) {
-                KeyCode.UP -> plotter.scroll(Point2D(0.0, h))
-                KeyCode.DOWN -> plotter.scroll(Point2D(0.0, -h))
-                KeyCode.LEFT -> plotter.scroll(Point2D(h, 0.0))
-                KeyCode.RIGHT -> plotter.scroll(Point2D(-h, 0.0))
+                KeyCode.UP -> plotter.scrollBy(Point2D(0.0, h))
+                KeyCode.DOWN -> plotter.scrollBy(Point2D(0.0, -h))
+                KeyCode.LEFT -> plotter.scrollBy(Point2D(h, 0.0))
+                KeyCode.RIGHT -> plotter.scrollBy(Point2D(-h, 0.0))
                 KeyCode.PLUS -> plotter.zoomIn()
                 KeyCode.MINUS -> plotter.zoomOut()
                 KeyCode.DIGIT0, KeyCode.EQUALS -> plotter.zoomReset()
