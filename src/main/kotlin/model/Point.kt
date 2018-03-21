@@ -12,7 +12,7 @@ data class Point(
         val y: Int
 ) {
 
-    constructor(point:Point2D):this(Math.round(point.x).toInt(), Math.round(point.y).toInt())
+    constructor(point: Point2D) : this(Math.round(point.x).toInt(), Math.round(point.y).toInt())
 
     fun getColor(reference: Point?, color: Color) = when {
         color == Color.UNDEFINED || (x + (reference?.x ?: 0) + y + (reference?.y ?: 0)) % 2 == 0 -> color
@@ -38,4 +38,8 @@ data class Point(
     fun distance(point: Point) = sqrt(
             (x - point.x).toDouble().pow(2.0) + (y - point.y).toDouble().pow(2.0)
     )
+
+    companion object {
+        val ZERO = Point(0, 0)
+    }
 }

@@ -84,6 +84,9 @@ class Planet(
                         it.to2D()
                     }
 
+            if (points.isEmpty())
+                return Point.ZERO
+
             val sum = points.reduce { acc, point ->
                 acc + point
             }
@@ -99,7 +102,7 @@ class Planet(
                 "",
                 emptyList(),
                 null,
-                Point(0, 0),
+                null,
                 Point.Color.UNDEFINED
         )
 
