@@ -48,7 +48,7 @@ class Planet(
             startColor
     )
 
-    fun export() {
+    fun export():List<String> {
         val lines = ArrayList<String>()
 
         val h = if (startColor == Point.Color.UNDEFINED) "" else " ${startColor.name.toLowerCase()}"
@@ -65,9 +65,7 @@ class Planet(
             lines.add("target ${it.x},${it.y}")
         }
 
-        lines.forEach {
-            println(it)
-        }
+        return lines.toList()
     }
 
     fun getCenter(): Point {

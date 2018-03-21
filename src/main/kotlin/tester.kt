@@ -21,9 +21,7 @@ class MyApp : App(MyView::class)
 
 class MyView : View() {
 
-    val planet = mutableListOf(Planet.empty())
-
-    val canvas = ResizeableCanvas()
+    private val canvas = ResizeableCanvas()
     val plotter = Plotter(canvas)
 
     override val root = borderpane {
@@ -55,8 +53,7 @@ class MyView : View() {
                     val result = dialog.showAndWait()
                     result.ifPresent { name ->
                         if (PlanetProvider.checkPlanet(name)) {
-                            planet.add(PlanetProvider.getPlanet(name))
-                            plotter.update(planet.last())
+                            plotter.update(PlanetProvider.getPlanet(name))
                         }
                     }
                 }
@@ -71,19 +68,20 @@ class MyView : View() {
                     val result = dialog.showAndWait()
                     result.ifPresent { coord ->
                         val split = coord.split(",")
-                        planet.add(Planet.fromScratch(Point(split[0].toInt(), split[1].toInt())))
-                        plotter.update(planet.last())
+                        plotter.update(Planet.fromScratch(Point(split[0].toInt(), split[1].toInt())))
                     }
                 }
             }
             button("Export") {
                 action {
-                    planet.last().export()
+                    plotter.planet.export().forEach {
+                        println(it)
+                    }
                 }
             }
             button("Set start color") {
                 action {
-                    val dialog = ChoiceDialog(planet.last().startColor.toString(), listOf(
+                    val dialog = ChoiceDialog(plotter.planet.startColor.toString(), listOf(
                             Point.Color.UNDEFINED.toString(),
                             Point.Color.RED.toString(),
                             Point.Color.BLUE.toString()
@@ -99,17 +97,18 @@ class MyView : View() {
                             c.toUpperCase().startsWith("B") -> Point.Color.BLUE
                             else -> Point.Color.UNDEFINED
                         }
-                        planet.add(planet.last().setStartColor(color))
-                        plotter.update(planet.last())
+                        plotter.update(plotter.planet.setStartColor(color))
                     }
                 }
             }
             button("Undo") {
                 action {
-                    if (planet.size > 1) {
-                        planet.removeAt(planet.size - 1)
-                        plotter.update(planet.last())
-                    }
+                    plotter.undo()
+                }
+            }
+            button("Redo") {
+                action {
+                    plotter.redo()
                 }
             }
             button("Toggle grid") {
@@ -133,7 +132,7 @@ class MyView : View() {
                 KeyCode.PLUS -> plotter.zoomIn()
                 KeyCode.MINUS -> plotter.zoomOut()
                 KeyCode.DIGIT0, KeyCode.EQUALS -> plotter.zoomReset()
-                KeyCode.R -> plotter.resetScroll(planet.last().start)
+                KeyCode.R -> plotter.resetScroll()
                 else -> {
                 }
             }
@@ -144,10 +143,8 @@ class MyView : View() {
         canvas.widthProperty().bind(root.widthProperty())
         canvas.heightProperty().bind(root.heightProperty())
 
-        plotter.update(planet.last())
-
         val timeline = Timeline(KeyFrame(Duration.seconds(0.2), EventHandler<ActionEvent> {
-            plotter.resetScroll(planet.last().start)
+            plotter.resetScroll()
         }))
         timeline.cycleCount = 1
         timeline.play()

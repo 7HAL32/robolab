@@ -28,9 +28,8 @@ class Plotter(
     private var pointDrawer = PointDrawer(drawer)
     private var pathDrawer = PathDrawer(drawer)
     private val planetHistory = History(Planet.empty())
-    private var planet
+    val planet
         get() = planetHistory.current()
-        set(value) = planetHistory.reset(value)
 
     init {
 
@@ -58,12 +57,12 @@ class Plotter(
             if (isPathEditing) {
                 testPointer(Point2D(it.x, it.y))
                 val p = finishPathEditing()
-                """
+
                 p?.let {
-                    planet.add(planet.last().addPath(p))
-                    update(planet.last())
+                    planetHistory.push(planet.addPath(p))
+                    draw()
                 }
-                """
+
             }
         }
         canvas.setOnMouseMoved {
@@ -78,21 +77,32 @@ class Plotter(
     }
 
     fun update(planet: Planet, reset:Boolean = false) = drawAfter {
-        this.planet = planet
-
         if (reset) {
+            planetHistory.reset(planet)
             resetScroll()
+        } else {
+            planetHistory.push(planet)
         }
     }
 
-    var showGrid: Boolean = true
+    fun undo() = drawAfter {
+        planetHistory.undo()
+    }
+
+    fun redo() = drawAfter {
+        planetHistory.redo()
+    }
+
+    var showGrid: Boolean
+        get() = gridDrawer.showGrid
         set(value) = drawAfter {
-            field = value
+            gridDrawer.showGrid = value
         }
 
-    var showGridNumber: Boolean = true
+    var showGridNumber: Boolean
+        get() = gridDrawer.showGridNumber
         set(value) = drawAfter {
-            field = value
+            gridDrawer.showGridNumber = value
         }
 
     var editMode: Boolean
