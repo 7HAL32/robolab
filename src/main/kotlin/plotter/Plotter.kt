@@ -1,8 +1,8 @@
 package plotter
 
 import Planet
+import ResizeableCanvas
 import javafx.geometry.Point2D
-import javafx.scene.canvas.Canvas
 import javafx.scene.paint.Color
 import model.Direction
 import model.Path
@@ -15,19 +15,67 @@ import kotlin.math.min
  */
 
 class Plotter(
-        val canvas: Canvas
+        val canvas: ResizeableCanvas
 ) {
 
     internal var scale = 1.0
     internal var translate = Point2D.ZERO
 
-    private var planet = Planet.empty()
 
     private val drawer = DrawHelper(this)
 
     private var gridDrawer = GridDrawer(drawer)
     private var pointDrawer = PointDrawer(drawer)
     private var pathDrawer = PathDrawer(drawer)
+    private val planetHistory = History(Planet.empty())
+    private var planet
+        get() = planetHistory.current()
+        set(value) = planetHistory.reset(value)
+
+    init {
+
+        canvas.addDrawHook {
+            draw()
+        }
+
+        var scroll: Point2D = Point2D.ZERO
+        canvas.setOnMousePressed {
+            if (isDirectionHighlighted && editMode) {
+                startPathEditing()
+            } else {
+                scroll = Point2D(it.x, it.y)
+            }
+        }
+        canvas.setOnMouseDragged {
+            if (isPathEditing) {
+                testPointer(Point2D(it.x, it.y))
+            } else {
+                scrollBy(scroll.subtract(it.x, it.y).multiply((-1).toDouble()))
+                scroll = Point2D(it.x, it.y)
+            }
+        }
+        canvas.setOnMouseReleased {
+            if (isPathEditing) {
+                testPointer(Point2D(it.x, it.y))
+                val p = finishPathEditing()
+                """
+                p?.let {
+                    planet.add(planet.last().addPath(p))
+                    update(planet.last())
+                }
+                """
+            }
+        }
+        canvas.setOnMouseMoved {
+            testPointer(Point2D(it.x, it.y))
+        }
+        canvas.setOnScroll {
+            if (it.deltaY > 0)
+                zoomIn(Point2D(it.x, it.y))
+            else if (it.deltaY < 0)
+                zoomOut(Point2D(it.x, it.y))
+        }
+    }
 
     fun update(planet: Planet) = drawAfter {
         this.planet = planet
@@ -43,9 +91,16 @@ class Plotter(
             field = value
         }
 
-    var editMode: Boolean = false
+    var editMode: Boolean
+        get() = pointDrawer is EditPointDrawer
         set(value) = drawAfter {
-            field = value
+            if (value) {
+                pointDrawer = EditPointDrawer(drawer)
+                pathDrawer = EditPathDrawer(drawer)
+            } else {
+                pointDrawer = PointDrawer(drawer)
+                pathDrawer = PathDrawer(drawer)
+            }
         }
 
     private var pointerEvent: PointerEvent = PointerEvent.empty(Point2D.ZERO)
@@ -54,13 +109,15 @@ class Plotter(
         get() = pointerEvent.direction != null
 
     val isPathEditing: Boolean
-        get() = pointDrawer is EditPointDrawer
+        get() = (pointDrawer as? EditPointDrawer)?.isPathEditing() ?: false
 
     fun startPathEditing() {
-        if (pointerEvent.point != null && pointerEvent.direction != null) {
-            val editStart = Pair(pointerEvent.point!!, pointerEvent.direction!!)
-            pointDrawer = EditPointDrawer(drawer, editStart)
-            pathDrawer = EditPathDrawer(drawer, editStart)
+        pointerEvent.point?.let { point ->
+            pointerEvent.direction?.let { direction ->
+                val editStart = Pair(point, direction)
+                (pointDrawer as? EditPointDrawer)?.editStart = editStart
+                (pathDrawer as? EditPathDrawer)?.editStart = editStart
+            }
         }
     }
 
@@ -68,8 +125,8 @@ class Plotter(
         return (pathDrawer as? EditPathDrawer)?.let {
             val result = it.getPath(pointerEvent)
 
-            pointDrawer = PointDrawer(drawer)
-            pathDrawer = PathDrawer(drawer)
+            (pointDrawer as? EditPointDrawer)?.editStart = null
+            (pathDrawer as? EditPathDrawer)?.editStart = null
 
             result
         }
@@ -80,8 +137,13 @@ class Plotter(
             field = value
         }
 
+    var widthReduce: Double = 0.0
+        set(value) = drawAfter {
+            field = value
+        }
+
     internal val width: Double
-        get() = canvas.width
+        get() = canvas.width - widthReduce
 
     internal val height: Double
         get() = canvas.height - heightReduce
@@ -89,7 +151,7 @@ class Plotter(
     fun draw() {
         drawer.clear()
 
-        gridDrawer.draw(planet, pointerEvent)
+        gridDrawer.draw()
         pointDrawer.draw(planet, pointerEvent)
         pathDrawer.draw(planet, pointerEvent)
     }
@@ -103,8 +165,10 @@ class Plotter(
         translate += d
     }
 
-    fun resetScroll(point: Point) = drawAfter {
-        translate = Point2D(width / 2, height * 2 / 3) - drawer.systemToReal(point.to2D(), Point2D.ZERO)
+    fun resetScroll(point: Point?) = drawAfter {
+        val p = point ?: planet.getCenter()
+
+        translate = Point2D(width / 2, height * 2 / 3) - drawer.systemToReal(p.to2D(), Point2D.ZERO)
         pointerEvent = PointerEvent.empty(pointerEvent.mouse)
     }
 

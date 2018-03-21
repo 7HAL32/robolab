@@ -11,8 +11,11 @@ data class Point(
         val x: Int,
         val y: Int
 ) {
-    fun getColor(reference: Point, color: Color) = when {
-        color == Color.UNDEFINED || (x + reference.x + y + reference.y) % 2 == 0 -> color
+
+    constructor(point:Point2D):this(Math.round(point.x).toInt(), Math.round(point.y).toInt())
+
+    fun getColor(reference: Point?, color: Color) = when {
+        color == Color.UNDEFINED || (x + (reference?.x ?: 0) + y + (reference?.y ?: 0)) % 2 == 0 -> color
         color == Color.RED -> Color.BLUE
         else -> Color.RED
     }

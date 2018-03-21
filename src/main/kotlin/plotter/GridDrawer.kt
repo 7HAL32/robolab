@@ -6,12 +6,12 @@ import javafx.geometry.Point2D
 /**
  * @author lars
  */
-class GridDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
+class GridDrawer(private val drawer: DrawHelper) {
 
     var showGrid: Boolean = true
     var showGridNumber: Boolean = true
 
-    override fun draw(planet: Planet, pointerEvent: PointerEvent) {
+    fun draw() {
         val fontSize = 16.0
 
         val everyLine = drawer.gridWidth > fontSize

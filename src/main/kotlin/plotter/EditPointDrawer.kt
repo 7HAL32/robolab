@@ -8,9 +8,11 @@ import model.Point
 /**
  * @author lars
  */
-class EditPointDrawer(drawer: DrawHelper, val editStart: Pair<Point, Direction>) : PointDrawer(drawer) {
+class EditPointDrawer(drawer: DrawHelper) : PointDrawer(drawer) {
+
+    var editStart: Pair<Point, Direction>? = null
+
     override fun draw(planet: Planet, pointerEvent: PointerEvent) {
-        println("arfgdhsfdg")
         val cols = drawer.getVisibleCols()
         val rows = drawer.getVisibleRows()
 
@@ -30,8 +32,10 @@ class EditPointDrawer(drawer: DrawHelper, val editStart: Pair<Point, Direction>)
             }
         }
 
-        if (editStart.first == point)
-            drawer.line(point.to2D(), getLineStart(point, editStart.second), Plotter.Companion.COLOR.HIGHLIGHT, Plotter.LineType.THICK)
+        editStart?.let {
+            if (it.first == point)
+                drawer.line(point.to2D(), getLineStart(point, it.second), Plotter.Companion.COLOR.HIGHLIGHT, Plotter.LineType.THICK)
+        }
 
         val background = when (point.getColor(planet.start, planet.startColor)) {
             Point.Color.RED -> Plotter.Companion.COLOR.RED_LIGHT
@@ -47,4 +51,6 @@ class EditPointDrawer(drawer: DrawHelper, val editStart: Pair<Point, Direction>)
                 if (pointerEvent.point == point && pointerEvent.direction == null) Plotter.LineType.THICK else Plotter.LineType.NORMAL
         )
     }
+
+    fun isPathEditing(): Boolean = editStart != null
 }

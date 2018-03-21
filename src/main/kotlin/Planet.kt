@@ -1,6 +1,8 @@
 import model.Direction
 import model.Point
 import plotter.PathAttributes
+import plotter.plus
+import plotter.times
 import java.nio.file.Path
 
 /**
@@ -10,7 +12,7 @@ class Planet(
         val name: String,
         val paths: List<Pair<model.Path, Set<PathAttributes>>>,
         val target: Point?,
-        val start: Point,
+        val start: Point?,
         val startColor: Point.Color
 ) {
 
@@ -50,7 +52,9 @@ class Planet(
         val lines = ArrayList<String>()
 
         val h = if (startColor == Point.Color.UNDEFINED) "" else " ${startColor.name.toLowerCase()}"
-        lines.add("start ${start.x},${start.y}$h")
+        start?.let {
+            lines.add("start ${it.x},${it.y}$h")
+        }
 
         paths.forEach {
             val w = it.first.weight ?: 1
@@ -66,7 +70,29 @@ class Planet(
         }
     }
 
+    fun getCenter(): Point {
+        val points = paths
+                .flatMap {
+                    setOf(
+                            it.first.startPoint,
+                            it.first.endPoint
+                    )
+                }
+                .distinct()
+                .map {
+                    it.to2D()
+                }
+
+        val sum = points.reduce { acc, point ->
+            acc + point
+        }
+
+        return Point(sum * (1 / points.size))
+    }
+
+
     companion object {
+
         fun empty(): Planet = Planet(
                 "",
                 emptyList(),
@@ -92,7 +118,6 @@ class Planet(
             }
             val start = startPointAndColor.first
             val startColor = startPointAndColor.second
-
 
             val target = lines.find { it.first() == "target" }?.let { Point(it[1].toInt(), it[2].toInt()) }
 

@@ -36,8 +36,10 @@ open class PointDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                                 .toSet()
                     }.let {
                         val h = it.toMutableMap()
-                        if (!h.containsKey(planet.start)) {
-                            h[planet.start] = emptySet()
+                        planet.start?.let {
+                            if (!h.containsKey(it)) {
+                                h[it] = emptySet()
+                            }
                         }
                         planet.target?.let {
                             if (!h.containsKey(it)) {

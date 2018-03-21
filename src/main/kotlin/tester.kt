@@ -141,48 +141,8 @@ class MyView : View() {
     }
 
     init {
-
-        canvas.addDrawHook {
-            plotter.draw()
-        }
         canvas.widthProperty().bind(root.widthProperty())
         canvas.heightProperty().bind(root.heightProperty())
-
-        var scroll: Point2D = Point2D.ZERO
-        canvas.setOnMousePressed {
-            if (plotter.isDirectionHighlighted && plotter.editMode) {
-                plotter.startPathEditing()
-            } else {
-                scroll = Point2D(it.x, it.y)
-            }
-        }
-        canvas.setOnMouseDragged {
-            if (plotter.isPathEditing) {
-                plotter.testPointer(Point2D(it.x, it.y))
-            } else {
-                plotter.scrollBy(scroll.subtract(it.x, it.y).multiply((-1).toDouble()))
-                scroll = Point2D(it.x, it.y)
-            }
-        }
-        canvas.setOnMouseReleased {
-            if (plotter.isPathEditing) {
-                plotter.testPointer(Point2D(it.x, it.y))
-                val p = plotter.finishPathEditing()
-                p?.let {
-                    planet.add(planet.last().addPath(p))
-                    plotter.update(planet.last())
-                }
-            }
-        }
-        canvas.setOnMouseMoved {
-            plotter.testPointer(Point2D(it.x, it.y))
-        }
-        canvas.setOnScroll {
-            if (it.deltaY > 0)
-                plotter.zoomIn(Point2D(it.x, it.y))
-            else if (it.deltaY < 0)
-                plotter.zoomOut(Point2D(it.x, it.y))
-        }
 
         plotter.update(planet.last())
 
