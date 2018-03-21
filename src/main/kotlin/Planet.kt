@@ -1,7 +1,6 @@
 import model.Direction
 import model.Point
 import plotter.PathAttributes
-import plotter.Plotter
 import java.nio.file.Path
 
 /**
@@ -9,21 +8,11 @@ import java.nio.file.Path
  */
 class Planet(
         val name: String,
-        val paths: List<model.Path>,
+        val paths: List<Pair<model.Path, Set<PathAttributes>>>,
         val target: Point?,
         val start: Point,
         val startColor: Point.Color
 ) {
-
-    fun plot(plotter: Plotter) {
-        plotter.onUpdate(
-                name,
-                start,
-                startColor,
-                paths.map { it to emptySet<PathAttributes>() },
-                target
-        )
-    }
 
     fun setName(name: String): Planet = Planet(
             name,
@@ -49,9 +38,9 @@ class Planet(
             startColor
     )
 
-    fun addPath(path: model.Path): Planet = Planet(
+    fun addPath(path: model.Path, attributes: Set<PathAttributes> = emptySet()): Planet = Planet(
             name,
-            paths + path,
+            paths + Pair(path, attributes),
             target,
             start,
             startColor
@@ -64,8 +53,8 @@ class Planet(
         lines.add("start ${start.x},${start.y}$h")
 
         paths.forEach {
-            val w = it.weight ?: 1
-            lines.add("${it.startPoint.x},${it.startPoint.y},${it.startDirection.export()} ${it.endPoint.x},${it.endPoint.y},${it.endDirection.export()} $w")
+            val w = it.first.weight ?: 1
+            lines.add("${it.first.startPoint.x},${it.first.startPoint.y},${it.first.startDirection.export()} ${it.first.endPoint.x},${it.first.endPoint.y},${it.first.endDirection.export()} $w")
         }
 
         target?.let {
@@ -78,7 +67,7 @@ class Planet(
     }
 
     companion object {
-        fun EMPTY(): Planet = Planet(
+        fun empty(): Planet = Planet(
                 "",
                 emptyList(),
                 null,
@@ -114,7 +103,7 @@ class Planet(
                         Point(it[3].toInt(), it[4].toInt()),
                         Direction.parse(it[5]),
                         if (it[6] == "blocked") -1 else it[6].toInt()
-                )
+                ) to emptySet<PathAttributes>()
             }
 
             return Planet(name, paths, target, start, startColor)
