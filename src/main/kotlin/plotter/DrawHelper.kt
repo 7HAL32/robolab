@@ -111,7 +111,7 @@ class DrawHelper(
     fun hLine(row: Double, color: Color) {
         val point = systemToReal(Point2D(0.0, row))
         canvas.stroke = color
-        canvas.strokeLine(0.0, point.y, plotter.width, point.y)
+        canvas.strokeLine(plotter.widthReduce / 2, point.y, plotter.width+ plotter.widthReduce/2, point.y)
     }
 
     fun vLine(col: Double, color: Color) {
