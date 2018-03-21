@@ -77,8 +77,12 @@ class Plotter(
         }
     }
 
-    fun update(planet: Planet) = drawAfter {
+    fun update(planet: Planet, reset:Boolean = false) = drawAfter {
         this.planet = planet
+
+        if (reset) {
+            resetScroll()
+        }
     }
 
     var showGrid: Boolean = true
@@ -132,12 +136,12 @@ class Plotter(
         }
     }
 
-    var heightReduce: Double = 0.0
+    internal var heightReduce: Double = 0.0
         set(value) = drawAfter {
             field = value
         }
 
-    var widthReduce: Double = 0.0
+    internal var widthReduce: Double = 0.0
         set(value) = drawAfter {
             field = value
         }
@@ -165,7 +169,7 @@ class Plotter(
         translate += d
     }
 
-    fun resetScroll(point: Point?) = drawAfter {
+    fun resetScroll(point: Point? = null) = drawAfter {
         val p = point ?: planet.getCenter()
 
         translate = Point2D(width / 2, height * 2 / 3) - drawer.systemToReal(p.to2D(), Point2D.ZERO)

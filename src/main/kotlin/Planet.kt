@@ -71,23 +71,27 @@ class Planet(
     }
 
     fun getCenter(): Point {
-        val points = paths
-                .flatMap {
-                    setOf(
-                            it.first.startPoint,
-                            it.first.endPoint
-                    )
-                }
-                .distinct()
-                .map {
-                    it.to2D()
-                }
+        if (start != null) {
+            return start
+        } else {
+            val points = paths
+                    .flatMap {
+                        setOf(
+                                it.first.startPoint,
+                                it.first.endPoint
+                        )
+                    }
+                    .distinct()
+                    .map {
+                        it.to2D()
+                    }
 
-        val sum = points.reduce { acc, point ->
-            acc + point
+            val sum = points.reduce { acc, point ->
+                acc + point
+            }
+
+            return Point(sum * (1 / points.size))
         }
-
-        return Point(sum * (1 / points.size))
     }
 
 

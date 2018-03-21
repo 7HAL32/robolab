@@ -15,7 +15,7 @@ class DrawHelper(
 ) {
     private val canvas = plotter.canvas.graphicsContext2D
 
-    fun clear() = canvas.clearRect(0.0, 0.0, plotter.width, plotter.height)
+    fun clear() = canvas.clearRect(plotter.widthReduce / 2, 0.0, plotter.width + plotter.widthReduce / 2, plotter.height)
 
     fun dashed(from: Point2D, to: Point2D, color: Color) {
         val start = systemToReal(from)
@@ -126,15 +126,15 @@ class DrawHelper(
         canvas.textBaseline = VPos.CENTER
         canvas.font = Font.font(fontSize)
 
-        canvas.fillText(number.toString(), position.x, position.y)
+        canvas.fillText(number.toString(), position.x + plotter.widthReduce / 2, position.y)
     }
 
 
     fun getVisibleRows(): Pair<Int, Int> = Math.floor(realToSystem(Point2D(0.0, plotter.height)).y).toInt() to
             Math.ceil(realToSystem(Point2D(0.0, 0.0)).y).toInt()
 
-    fun getVisibleCols(): Pair<Int, Int> = Math.floor(realToSystem(Point2D(0.0, 0.0)).x).toInt() to
-            Math.ceil(realToSystem(Point2D(plotter.width, 0.0)).x).toInt()
+    fun getVisibleCols(): Pair<Int, Int> = Math.floor(realToSystem(Point2D(plotter.widthReduce / 2, 0.0)).x).toInt() to
+            Math.ceil(realToSystem(Point2D(plotter.width + plotter.widthReduce / 2, 0.0)).x).toInt()
 
     val gridWidth: Double
         get() = Plotter.WIDTH_GRID * plotter.scale
@@ -148,11 +148,11 @@ class DrawHelper(
     fun systemToReal(point: Point2D, translate: Point2D = plotter.translate): Point2D = Point2D(
             point.x,
             -point.y
-    ) * (Plotter.WIDTH_GRID * plotter.scale) + translate
+    ) * (Plotter.WIDTH_GRID * plotter.scale) + translate + Point2D(plotter.widthReduce / 2, 0.0)
 
 
-    fun realToSystem(point: Point2D, translate: Point2D = plotter.translate): Point2D = Point2D(
+    fun realToSystem(point: Point2D, translate: Point2D = plotter.translate): Point2D = (Point2D(
             (point.x - translate.x),
             (translate.y - point.y)
-    ) * (1 / (Plotter.WIDTH_GRID * plotter.scale))
+    ) - Point2D(plotter.widthReduce / 2, 0.0)) * (1 / (Plotter.WIDTH_GRID * plotter.scale))
 }
