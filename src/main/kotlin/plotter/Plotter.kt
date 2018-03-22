@@ -2,8 +2,14 @@ package plotter
 
 import Planet
 import ResizeableCanvas
+import javafx.animation.Animation.INDEFINITE
+import javafx.animation.KeyFrame
+import javafx.animation.Timeline
+import javafx.event.ActionEvent
+import javafx.event.EventHandler
 import javafx.geometry.Point2D
 import javafx.scene.paint.Color
+import javafx.util.Duration
 import model.Direction
 import model.Path
 import model.Point
@@ -21,7 +27,6 @@ class Plotter(
     internal var scale = 1.0
     internal var translate = Point2D.ZERO
 
-
     private val drawer = DrawHelper(this)
 
     private var gridDrawer = GridDrawer(drawer)
@@ -31,10 +36,14 @@ class Plotter(
     val planet
         get() = planetHistory.current()
 
+    private var update: Boolean = false
+
+    private var animationProgress: Double = 1.0
+
     init {
 
         canvas.addDrawHook {
-            draw()
+            update()
         }
 
         var scroll: Point2D = Point2D.ZERO
@@ -60,7 +69,6 @@ class Plotter(
 
                 p?.let {
                     planetHistory.push(planet.addPath(p))
-                    draw()
                 }
 
             }
@@ -74,14 +82,30 @@ class Plotter(
             else if (it.deltaY < 0)
                 zoomOut(Point2D(it.x, it.y))
         }
+
+
+        val timeline = Timeline(
+                KeyFrame(
+                        Duration.seconds(1.0 / FPS),
+                        EventHandler<ActionEvent> {
+                            draw()
+                        }
+                )
+        )
+        timeline.cycleCount = INDEFINITE
+        timeline.play()
     }
 
-    fun update(planet: Planet, reset:Boolean = false) = drawAfter {
-        if (reset) {
-            planetHistory.reset(planet)
-            resetScroll()
-        } else {
-            planetHistory.push(planet)
+    fun update(planet: Planet? = null, reset: Boolean = false) = drawAfter {
+        planet?.let {
+            animationProgress = if (planet.hasAnimation()) 0.0 else 1.0
+
+            if (reset) {
+                planetHistory.reset(it)
+                resetScroll()
+            } else {
+                planetHistory.push(it)
+            }
         }
     }
 
@@ -163,16 +187,26 @@ class Plotter(
         get() = canvas.height - heightReduce
 
     fun draw() {
-        drawer.clear()
+        if (update || animationProgress < 1.0) {
+            update = false
+            drawer.clear()
 
-        gridDrawer.draw()
-        pointDrawer.draw(planet, pointerEvent)
-        pathDrawer.draw(planet, pointerEvent)
+            gridDrawer.draw()
+            pointDrawer.draw(planet, pointerEvent, animationProgress)
+            pathDrawer.draw(planet, pointerEvent, animationProgress)
+
+            if (animationProgress < 1.0) {
+                animationProgress += 1 / (FPS * ANIMATION_TIME)
+                if (animationProgress > 1.0) {
+                    animationProgress = 1.0
+                }
+            }
+        }
     }
 
     private fun drawAfter(block: () -> Unit) {
         block()
-        draw()
+        update = true
     }
 
     fun scrollBy(d: Point2D) = drawAfter {
@@ -254,6 +288,9 @@ class Plotter(
         const val POINT_RADIUS = 0.25
 
         const val LINE_HALF = 0.1
+
+        const val FPS = 50.0
+        const val ANIMATION_TIME = 1.0
 
         object COLOR {
             val RED: Color = Color.web("#F44336")

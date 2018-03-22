@@ -12,15 +12,16 @@ class EditPathDrawer(drawer: DrawHelper) : PathDrawer(drawer) {
 
     var editStart: Pair<Point, Direction>? = null
 
-    override fun draw(planet: Planet, pointerEvent: PointerEvent) {
-        super.draw(planet, pointerEvent)
+    override fun draw(planet: Planet, pointerEvent: PointerEvent, t: Double) {
+        super.draw(planet, pointerEvent, t)
 
         editStart?.let {
             if (pointerEvent.point != null && pointerEvent.direction != null) {
                 printPath(
                         planet,
                         Path(it.first, it.second, pointerEvent.point, pointerEvent.direction),
-                        setOf(PathAttributes.EDITING)
+                        setOf(PathAttributes.EDITING),
+                        t
                 )
             }
 

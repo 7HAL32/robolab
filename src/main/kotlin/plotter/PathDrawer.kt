@@ -12,18 +12,19 @@ import kotlin.math.pow
  * @author lars
  */
 open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
-    override fun draw(planet: Planet, pointerEvent: PointerEvent) {
+    override fun draw(planet: Planet, pointerEvent: PointerEvent, t: Double) {
         planet.paths.forEach {
-            printPath(planet, it.first, it.second)
+            printPath(planet, it.first, it.second, t)
         }
     }
 
 
-    protected fun printPath(planet: Planet, path: Path, attributes: Set<PathAttributes>) = with(path) {
+    protected fun printPath(planet: Planet, path: Path, attributes: Set<PathAttributes>, animate: Double) = with(path) {
+        val t = if (PathAttributes.ANIMATED in attributes) animate else 1.0
         when {
-            startPoint == endPoint -> printPathSamePoint(planet, this@with, attributes)
-            isOnSameLine() && isOppositeDirection() && isTowardsDirection() -> printPathStraight(this@with, attributes)
-            else -> printPathCurved(this@with, attributes)
+            startPoint == endPoint -> printPathSamePoint(planet, this@with, attributes, t)
+            isOnSameLine() && isOppositeDirection() && isTowardsDirection() -> printPathStraight(this@with, attributes, t)
+            else -> printPathCurved(this@with, attributes, t)
         }
     }
 
@@ -49,12 +50,19 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         else -> Plotter.Companion.COLOR.LINE
     }
 
-    private fun printPathStraight(path: Path, attributes: Set<PathAttributes>) {
+    private fun getWeightColor(t: Double): Color {
+        val pos = Math.max(Math.min((t - 0.4) * 5, 1.0), 0.0)
+        return Plotter.Companion.COLOR.BACKGROUND.interpolate(Plotter.Companion.COLOR.WEIGHT, pos)
+    }
+
+    private fun printPathStraight(path: Path, attributes: Set<PathAttributes>, t: Double) {
         val start = getLineStart(path.startPoint, path.startDirection)
         val end = getLineStart(path.endPoint, path.endDirection)
+
+        val e = ((end - start) * t) + start
         drawer.line(
                 start,
-                end,
+                e,
                 getLineColor(path, attributes)
         )
 
@@ -65,10 +73,11 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         }
 
         if (path.weight ?: 1 < 0) {
-            drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
+            if (t >= 0.5)
+                drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
         } else {
             path.weight?.let {
-                drawer.number(it, x1, Plotter.Companion.COLOR.WEIGHT, 12.0)
+                drawer.number(it, x1, getWeightColor(t), 12.0)
             }
         }
     }
@@ -77,7 +86,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         return radius * Math.PI / 4
     }
 
-    private fun printPathSamePoint(planet: Planet, path: Path, attributes: Set<PathAttributes>) = with(path) {
+    private fun printPathSamePoint(planet: Planet, path: Path, attributes: Set<PathAttributes>, t: Double) = with(path) {
         val radius = 0.3
         val s = getLineStart(startPoint, startDirection, radius)
         val e = getLineStart(endPoint, endDirection, radius)
@@ -141,7 +150,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                             drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
                         } else {
                             path.weight?.let {
-                                drawer.number(it, x1, Plotter.Companion.COLOR.WEIGHT, 12.0)
+                                drawer.number(it, x1, getWeightColor(t), 12.0)
                             }
                         }
                     }
@@ -183,14 +192,14 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                     drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
                 } else {
                     path.weight?.let {
-                        drawer.number(it, x1, Plotter.Companion.COLOR.WEIGHT, 12.0)
+                        drawer.number(it, x1, getWeightColor(t), 12.0)
                     }
                 }
             }
         }
     }
 
-    private fun printPathCurved(path: Path, attributes: Set<PathAttributes>) {
+    private fun printPathCurved(path: Path, attributes: Set<PathAttributes>, t: Double) {
         fun calcBezier(p0: Point2D, p1: Point2D, p2: Point2D, p3: Point2D, t: Double): Point2D {
             val h0 = -p0 + p1 * 3 - p2 * 3 + p3
             val h1 = p0 * 3 - p1 * 6 + p2 * 3
@@ -205,15 +214,18 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         val e = getLineStart(path.endPoint, path.endDirection)
 
         val step = 10.0 / (s.distance(e) * drawer.gridWidth)
-        var t = step
+        var t1 = step
 
         val points = mutableListOf(s)
 
-        while (t < 1.0) {
-            points.add(calcBezier(s, sd, ed, e, t))
-            t += step
+        while (t1 < t) {
+            points.add(calcBezier(s, sd, ed, e, t1))
+            t1 += step
         }
-        points.add(e)
+        if (t >= 1.0)
+            points.add(e)
+        else
+            points.add(calcBezier(s, sd, ed, e, t))
         drawer.line(points, getLineColor(path, attributes))
 
         val c = calcBezier(s, sd, ed, e, 0.5)
@@ -228,10 +240,11 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         }
 
         if (path.weight ?: 1 < 0) {
-            drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
+            if (t >= 0.5)
+                drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
         } else {
             path.weight?.let {
-                drawer.number(it, x1, Plotter.Companion.COLOR.WEIGHT, 12.0)
+                drawer.number(it, x1, getWeightColor(t), 12.0)
             }
         }
     }

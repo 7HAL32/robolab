@@ -48,7 +48,7 @@ class Planet(
             startColor
     )
 
-    fun export():List<String> {
+    fun export(): List<String> {
         val lines = ArrayList<String>()
 
         val h = if (startColor == Point.Color.UNDEFINED) "" else " ${startColor.name.toLowerCase()}"
@@ -95,6 +95,9 @@ class Planet(
         }
     }
 
+    fun hasAnimation(): Boolean = paths.any {
+        PathAttributes.ANIMATED in it.second
+    }
 
     companion object {
 

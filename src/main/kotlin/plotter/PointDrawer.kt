@@ -9,7 +9,7 @@ import model.Point
  */
 open class PointDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
 
-    override fun draw(planet: Planet, pointerEvent: PointerEvent) {
+    override fun draw(planet: Planet, pointerEvent: PointerEvent, t:Double) {
         val cols = drawer.getVisibleCols()
         val rows = drawer.getVisibleRows()
 

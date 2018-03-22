@@ -12,7 +12,7 @@ class EditPointDrawer(drawer: DrawHelper) : PointDrawer(drawer) {
 
     var editStart: Pair<Point, Direction>? = null
 
-    override fun draw(planet: Planet, pointerEvent: PointerEvent) {
+    override fun draw(planet: Planet, pointerEvent: PointerEvent, t: Double) {
         val cols = drawer.getVisibleCols()
         val rows = drawer.getVisibleRows()
 
@@ -21,7 +21,7 @@ class EditPointDrawer(drawer: DrawHelper) : PointDrawer(drawer) {
                 drawBackgroundPoint(planet, Point(x, y), pointerEvent)
             }
         }
-        super.draw(planet, pointerEvent)
+        super.draw(planet, pointerEvent, t)
     }
 
 
