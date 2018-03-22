@@ -48,4 +48,8 @@ data class Path(
 
     fun isTowardsBottomLeft() = (startDirection == Direction.SOUTH && endDirection == Direction.WEST) ||
             (endDirection == Direction.SOUTH && startDirection == Direction.WEST)
+
+    override fun hashCode(): Int {
+        return super.hashCode() // TODO
+    }
 }

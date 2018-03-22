@@ -17,7 +17,6 @@ enum class Direction {
     }
 
     companion object {
-
         fun parse(direction: String) = when (direction.toLowerCase()) {
             "n" -> NORTH
             "north" -> NORTH

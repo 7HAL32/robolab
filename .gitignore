@@ -2,3 +2,4 @@
 robolab.iml
 target/*
 src/main/resources/mqtt_login.json
+magic_draw/*
