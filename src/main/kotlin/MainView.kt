@@ -48,6 +48,11 @@ class MainView : View() {
         }
     }
 
+    override fun onUndock() {
+        println("exiting")
+        System.exit(0)
+    }
+
     init {
         messageManager.addListener {
             Platform.runLater {
