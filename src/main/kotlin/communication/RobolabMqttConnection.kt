@@ -11,14 +11,13 @@ import java.util.*
  */
 class RobolabMqttConnection : MqttConnection {
 
-    private val login = Login.login
+    private val login
+        get() = Login.login
 
-    private var mqttClient = MqttClient(serverUri, uniqueId())
-    private val mqttConnectOptions = MqttConnectOptions().apply {
-        userName = login.username
-        password = login.password.toCharArray()
-        mqttVersion = MqttConnectOptions.MQTT_VERSION_3_1
-    }
+    var mqttClient = MqttClient(serverUri, uniqueId())
+        private set(value) {
+            field = value
+        }
 
     override var subscribedTopics: Set<String> = emptySet()
     private var messageListeners = emptySet<MqttMessageListener>()
@@ -27,6 +26,11 @@ class RobolabMqttConnection : MqttConnection {
 
     private fun tryConnecting(): Boolean = try {
         mqttClient = MqttClient(serverUri, uniqueId())
+        val mqttConnectOptions = MqttConnectOptions().apply {
+            userName = login.username
+            password = login.password.toCharArray()
+            mqttVersion = MqttConnectOptions.MQTT_VERSION_3_1
+        }
         Runtime.getRuntime().addShutdownHook(Thread({
             if (mqttClient.isConnected) {
                 disconnect()

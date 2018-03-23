@@ -10,7 +10,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 
 class RobolabMessageProvider : MqttMessageListener {
 
-    private val mqttConnection = RobolabMqttConnection().apply {
+    val mqttConnection = RobolabMqttConnection().apply {
         addOnMessageListener(this@RobolabMessageProvider)
     }
 

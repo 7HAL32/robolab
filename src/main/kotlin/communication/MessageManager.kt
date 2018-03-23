@@ -5,7 +5,7 @@ package communication
  */
 class MessageManager : RobolabMessageListener {
 
-    private val mqttConnection = RobolabMessageProvider()
+    val mqttConnection = RobolabMessageProvider()
     var messages: List<RobolabMessage> = emptyList()
         private set(value) {
             field = value
@@ -15,6 +15,9 @@ class MessageManager : RobolabMessageListener {
 
     init {
         mqttConnection.addMessageListener(this)
+    }
+
+    fun start() {
         mqttConnection.start()
     }
 
