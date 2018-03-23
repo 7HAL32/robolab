@@ -53,7 +53,7 @@ class DrawHelper(
         val h1 = systemToReal(points.first())
         canvas.moveTo(h1.x, h1.y)
 
-        points.stream().skip(1).map {
+        points.drop(1).map {
             systemToReal(it)
         }.forEach {
             canvas.lineTo(it.x, it.y)

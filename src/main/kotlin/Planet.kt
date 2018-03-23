@@ -137,7 +137,7 @@ class Planet(
                         Point(it[3].toInt(), it[4].toInt()),
                         Direction.parse(it[5]),
                         if (it[6] == "blocked") -1 else it[6].toInt()
-                ) to emptySet<PathAttributes>()
+                ) to setOf(PathAttributes.ANIMATED)
             }
 
             return Planet(name, paths, target, start, startColor)
