@@ -94,6 +94,11 @@ class MqttMapFragment : BaseMapFragment() {
             update(planet, planet.messages.lastOrNull() is RobolabMessage.PlanetMessage)
     }
 
+    override fun onUndock() {
+        mapState?.destroy()
+        super.onUndock()
+    }
+
     private fun update(messagePlanet: RobolabMessagePlanet, reset: Boolean = false) {
         Platform.runLater {
             listView.items = messagePlanet.messages.observable()
