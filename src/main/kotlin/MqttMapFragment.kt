@@ -1,7 +1,4 @@
-import communication.MessageManager
-import communication.RobolabMessage
-import communication.RobolabMessageLog
-import communication.RobolabMessagePlanet
+import communication.*
 import javafx.application.Platform
 import javafx.scene.Node
 import javafx.scene.control.Label
@@ -20,7 +17,7 @@ class MqttMapFragment : BaseMapFragment() {
     fun setState(state: MqttMapState) {
         mapState?.destroy()
         mapState = state
-        state.messagePlanet?.let { update(it) }
+        state.planetMessages?.let { update(it) }
         modeLabel.text = state.stateText
     }
 
@@ -67,13 +64,14 @@ class MqttMapFragment : BaseMapFragment() {
             timeLabel = label()
             listView = listview {
                 onUserSelect(1) { message ->
-                    ((mapState?.messagePlanet?.messages?.takeWhile { it != message } ?: emptyList()) + message).let {
-                        plotter.update(RobolabMessagePlanet.listToPlanet(it))
-                    }
+                    plotter.update(
+                            ((mapState?.planetMessages?.takeWhile { it != message } ?: emptyList()) + message)
+                                    .toPlanet())
                 }
             }
         }
     }
+
 
     init {
         setState(LiveMapState(
@@ -83,15 +81,14 @@ class MqttMapFragment : BaseMapFragment() {
                 ::onUpdate
         ))
         mapState?.let { state ->
-            state.messagePlanet?.let { messagePlanet ->
-                update(messagePlanet, true)
-            }
+            update(state.planetMessages, true)
+            println(state.planetMessages)
         }
 
     }
 
-    private fun onUpdate(planet: RobolabMessagePlanet) {
-            update(planet, planet.messages.lastOrNull() is RobolabMessage.PlanetMessage)
+    private fun onUpdate(planetMessages: List<RobolabMessage>) {
+        update(planetMessages, planetMessages.lastOrNull() is RobolabMessage.PlanetMessage)
     }
 
     override fun onUndock() {
@@ -99,17 +96,17 @@ class MqttMapFragment : BaseMapFragment() {
         super.onUndock()
     }
 
-    private fun update(messagePlanet: RobolabMessagePlanet, reset: Boolean = false) {
+    private fun update(planetMessages: List<RobolabMessage>, reset: Boolean = false) {
         Platform.runLater {
-            listView.items = messagePlanet.messages.observable()
-            val planet = messagePlanet.toPlanet()
+            listView.items = planetMessages.observable()
+            val planet = planetMessages.toPlanet()
             plotter.update(planet, reset)
-            val planetCount = messageManager.groupDataMap[groupId]?.planets?.size ?: 0
+            val planetCount = (messageManager.messages forGroup groupId).toLog().size
             val planetNumber = (mapState?.currentIndex ?: -1) + 1
             planetNumberLabel.text = "$planetNumber/$planetCount"
             groupLabel.text = "Group id: $groupId"
             planetLabel.text = "Planet name: ${planet.name}"
-            timeLabel.text = "Time (sec): " + messagePlanet.timeOfFirstMessage?.let {
+            timeLabel.text = "Time (sec): " + planetMessages.timeOfFirstMessage.let {
                 (System.currentTimeMillis() - it) / 1000
             }.toString()
 

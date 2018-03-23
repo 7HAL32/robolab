@@ -2,8 +2,8 @@
  * @author leon
  */
 import communication.MessageManager
-import communication.RobolabMessageLog
-import communication.RobolabMessagePlanet
+import communication.RobolabMessage
+import communication.toLog
 
 /**
  * @author leon
@@ -12,7 +12,7 @@ class LiveMapState(
         groupId: String,
         stateSetter: (MqttMapState) -> Unit,
         messageManager: MessageManager,
-        updateCallback: (RobolabMessagePlanet) -> Unit
+        updateCallback: (List<RobolabMessage>) -> Unit
 ) : MqttMapState(groupId, stateSetter, messageManager, updateCallback) {
 
     init {
@@ -21,11 +21,9 @@ class LiveMapState(
 
     override val stateText = "Live mode"
     override val currentIndex
-        get() = (messageManager.groupDataMap[groupId]?.planets?.size ?: 0) - 1
+        get() = messageManager.messages.filter { it.groupId == groupId }.toLog().lastIndex
 
-    private fun onUpdate(log: RobolabMessageLog) {
-        log.currentPlanet()?.let { updateCallback(it) }
-    }
+    private fun onUpdate(groupMessages: List<RobolabMessage>) = updateCallback(groupMessages.toLog().last())
 
     override fun destroy() {
         messageManager.removeListenerForGroup(groupId, ::onUpdate)
@@ -35,19 +33,20 @@ class LiveMapState(
     }
 
     override fun previous() {
-        messageManager.groupDataMap[groupId]?.planets?.let {
+
+        groupMessages.toLog().let {
             if (it.size > 1) {
                 stateSetter(HistoryMapState(
                         groupId,
                         stateSetter,
                         messageManager,
                         updateCallback,
-                        it.size - 2
+                        it.lastIndex - 1
                 ))
             }
         }
     }
 
-    override val messagePlanet: RobolabMessagePlanet?
-        get() = messageManager.groupDataMap[groupId]?.currentPlanet()
+    override val planetMessages: List<RobolabMessage>
+        get() = groupMessages.toLog().last()
 }

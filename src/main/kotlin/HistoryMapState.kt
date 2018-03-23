@@ -1,5 +1,6 @@
 import communication.MessageManager
-import communication.RobolabMessagePlanet
+import communication.RobolabMessage
+import communication.toLog
 
 /**
  * @author leon
@@ -8,7 +9,7 @@ class HistoryMapState(
         groupId: String,
         stateSetter: (MqttMapState) -> Unit,
         messageManager: MessageManager,
-        updateCallback: (RobolabMessagePlanet) -> Unit,
+        updateCallback: (List<RobolabMessage>) -> Unit,
         private val index: Int
 ) : MqttMapState(groupId, stateSetter, messageManager, updateCallback) {
 
@@ -21,12 +22,10 @@ class HistoryMapState(
     }
 
     override fun next() {
-        messageManager.groupDataMap[groupId]?.planets?.size?.let {
-            if (index < it - 2) {
-                stateSetter(HistoryMapState(groupId, stateSetter, messageManager, updateCallback, index + 1))
-            } else {
-                stateSetter(LiveMapState(groupId, stateSetter, messageManager, updateCallback))
-            }
+        if (index < groupMessages.toLog().size - 2) {
+            stateSetter(HistoryMapState(groupId, stateSetter, messageManager, updateCallback, index + 1))
+        } else {
+            stateSetter(LiveMapState(groupId, stateSetter, messageManager, updateCallback))
         }
     }
 
@@ -37,6 +36,6 @@ class HistoryMapState(
 
     }
 
-    override val messagePlanet: RobolabMessagePlanet?
-        get() = messageManager.groupDataMap[groupId]?.planets?.get(index)
+    override val planetMessages: List<RobolabMessage>
+        get() = groupMessages.toLog()[index]
 }

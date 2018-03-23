@@ -6,45 +6,50 @@ package communication
 class MessageManager : RobolabMessageListener {
 
     private val mqttConnection = RobolabMessageProvider()
-    val groupDataMap = mutableMapOf<String, RobolabMessageLog>()
-    private var listeners = setOf<(Map<String, RobolabMessageLog>) -> Unit>()
-    private val groupListeners = mutableMapOf<String, MutableList<(RobolabMessageLog) -> Unit>>()
+    var messages: List<RobolabMessage> = emptyList()
+        private set(value) {
+            field = value
+        }
+    private var listeners: Set<(List<RobolabMessage>) -> Unit> = emptySet()
+    private var groupListeners: Map<String, Set<(List<RobolabMessage>) -> Unit>> = emptyMap()
 
     init {
         mqttConnection.addMessageListener(this)
         mqttConnection.start()
     }
 
-    fun addListener(listener: (Map<String, RobolabMessageLog>) -> Unit) {
+    fun addListener(listener: (List<RobolabMessage>) -> Unit) {
         listeners += listener
     }
 
-    fun addListenerForGroup(groupId: String, listener: (RobolabMessageLog) -> Unit) =
-            groupListeners.getOrPut(groupId) { mutableListOf() }.add(listener)
+    fun addListenerForGroup(groupId: String, listener: (List<RobolabMessage>) -> Unit) {
+        groupListeners = with(groupListeners) {
+            filterNot { it.key == groupId }.plus(groupId to (getOrDefault(groupId, emptySet())) + listener)
+        }
+    }
 
-    fun removeListener(listener: (Map<String, RobolabMessageLog>) -> Unit) {
+    fun removeListener(listener: (List<RobolabMessage>) -> Unit) {
         listeners -= listener
     }
 
-    fun removeListenerForGroup(groupId: String, listener: (RobolabMessageLog) -> Unit) =
-            groupListeners[groupId]?.remove(listener) ?: false
+    fun removeListenerForGroup(groupId: String, listener: (List<RobolabMessage>) -> Unit) {
+        groupListeners = with(groupListeners) {
+            filterNot { it.key == groupId }.plus(groupId to (getOrDefault(groupId, emptySet())) - listener)
+        }
+    }
 
 
     override fun onRobolabMessage(message: RobolabMessage) {
-        val log = groupDataMap.getOrPut(message.groupId, ::RobolabMessageLog)
-        log.addMessage(message)
+        messages += message
         updateGroup(message.groupId)
         update()
     }
 
-    private fun update() = listeners.forEach { it(groupDataMap.toMap()) }
+    private fun update() = listeners.forEach { it(messages) }
 
     private fun updateGroup(groupId: String) {
-        val log = groupDataMap[groupId]
-        if (log != null) {
-            groupListeners[groupId]?.forEach {
-                it(log)
-            }
+        groupListeners[groupId]?.forEach { listener ->
+            listener(messages.filter { it.groupId == groupId })
         }
     }
 }

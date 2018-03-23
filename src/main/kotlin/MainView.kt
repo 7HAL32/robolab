@@ -1,6 +1,6 @@
+import communication.MessageManager
 import javafx.application.Platform
 import javafx.scene.control.TableView
-import communication.MessageManager
 import tornadofx.*
 
 /**
@@ -56,7 +56,9 @@ class MainView : View() {
     init {
         messageManager.addListener {
             Platform.runLater {
-                groupTable.items = it.map { GroupInfo(it.key, it.value) }
+                groupTable.items = it.groupBy { it.groupId }.map {
+                    GroupInfo(it.key, it.value)
+                }
                         .sortedByDescending { it.lastMessageTime }
                         .observable()
             }

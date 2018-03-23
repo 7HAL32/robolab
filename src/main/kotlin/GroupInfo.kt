@@ -1,14 +1,14 @@
 import communication.RobolabMessage
-import communication.RobolabMessageLog
+import communication.toLog
 import tornadofx.observable
 import java.text.SimpleDateFormat
 import java.util.*
 
 class GroupInfo(
         val groupName: String,
-        log: RobolabMessageLog
+        groupMessages: List<RobolabMessage>
 ) {
-    val mqttMessages = log.currentPlanet()?.messages ?: emptyList()
+    val mqttMessages = groupMessages.toLog().last()
 
     val groupNameProperty = observable(this, GroupInfo::groupName)
 
@@ -25,6 +25,6 @@ class GroupInfo(
     }.size
     val numberOfRobotPathsProperty = observable(this, GroupInfo::numberOfRobotPaths)
 
-    val oldPlanetCount = log.planets.size - 1
+    val oldPlanetCount = groupMessages.toLog().size - 1
     val oldPlanetCountProperty = observable(this, GroupInfo::oldPlanetCount)
 }
