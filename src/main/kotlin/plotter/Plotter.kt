@@ -11,6 +11,7 @@ import javafx.geometry.Point2D
 import javafx.scene.paint.Color
 import javafx.util.Duration
 import model.Direction
+import model.LiveOdometry
 import model.Path
 import model.Point
 import kotlin.math.max
@@ -32,6 +33,8 @@ class Plotter(
     private var gridDrawer = GridDrawer(drawer)
     private var pointDrawer = PointDrawer(drawer)
     private var pathDrawer = PathDrawer(drawer)
+    private var odometryDrawer = OdometryDrawer(drawer)
+    private var liveOdometry = emptyList<LiveOdometry>()
     private val planetHistory = History(Planet.empty())
     val planet
         get() = planetHistory.current()
@@ -98,7 +101,7 @@ class Plotter(
 
     fun update(planet: Planet? = null, reset: Boolean = false) = drawAfter {
         planet?.let {
-            animationProgress = if (planet.hasAnimation()) 0.0 else 1.0
+            animationProgress = if (it.hasAnimation()) 0.0 else 1.0
 
             if (reset) {
                 planetHistory.reset(it)
@@ -107,6 +110,10 @@ class Plotter(
                 planetHistory.push(it)
             }
         }
+    }
+
+    fun liveOdometry(data: List<LiveOdometry>) = drawAfter {
+        liveOdometry = data
     }
 
     fun undo() = drawAfter {
@@ -192,6 +199,11 @@ class Plotter(
             drawer.clear()
 
             gridDrawer.draw()
+
+            if (liveOdometry.isNotEmpty()) {
+                odometryDrawer.draw(liveOdometry)
+            }
+
             pointDrawer.draw(planet, pointerEvent, animationProgress)
             pathDrawer.draw(planet, pointerEvent, animationProgress)
 
@@ -290,7 +302,7 @@ class Plotter(
         const val LINE_HALF = 0.1
 
         const val FPS = 50.0
-        const val ANIMATION_TIME = 5.0
+        const val ANIMATION_TIME = 1.0
 
         object COLOR {
             val RED: Color = Color.web("#F44336")
@@ -307,6 +319,7 @@ class Plotter(
             val BLOCKED: Color = Color.web("#F44336")
             val HIGHLIGHT: Color = Color.web("#009688")
             val WEIGHT: Color = Color.web("#666666")
+            val ODOMETRY: Color = Color.web("#CDDC39")
         }
     }
 
