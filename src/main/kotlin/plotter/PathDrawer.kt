@@ -6,7 +6,9 @@ import javafx.scene.paint.Color
 import model.Direction
 import model.Path
 import model.Point
+import kotlin.math.acos
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 /**
  * @author lars
@@ -64,6 +66,10 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                 e,
                 getLineColor(path, attributes)
         )
+
+        if (t < 1.0) {
+            drawer.arrow(e, pointsToDeg(start, end), getLineColor(path, attributes))
+        }
 
         val s = (start + end) * 0.5
         val (x1, x2) = when (path.startDirection) {
@@ -254,6 +260,13 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
             points.add(calcBezier(s, sd, ed, e, t))
         drawer.line(points, getLineColor(path, attributes))
 
+
+        if (t < 1.0) {
+            drawer.arrow(points.last(), pointsToDeg(points.getOrNull(points.size - 3)
+                    ?: points.getOrNull(points.size - 2)
+                    ?: points.last(), points.last()), getLineColor(path, attributes))
+        }
+
         val c = calcBezier(s, sd, ed, e, 0.5)
         val (bezierBefore, bezierAfter) =
                 (calcBezier(s, sd, ed, e, 0.49) to calcBezier(s, sd, ed, e, 0.51))
@@ -275,4 +288,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         }
     }
 
+    private fun pointsToDeg(p1: Point2D, p2: Point2D): Double = with(p2 - p1) {
+        acos(y / sqrt(x * x + y * y))
+    } * if (p2.x > p1.x) 1.0 else -1.0
 }

@@ -300,9 +300,10 @@ class Plotter(
         const val POINT_RADIUS = 0.25
         const val RADIUS = 0.3
         const val LINE_HALF = 0.1
+        const val ARROW_SIZE = 0.15
 
         const val FPS = 50.0
-        const val ANIMATION_TIME = 1.0
+        const val ANIMATION_TIME = 20.0
 
         object COLOR {
             val RED: Color = Color.web("#F44336")

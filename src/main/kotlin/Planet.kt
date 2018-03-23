@@ -1,6 +1,5 @@
 import model.Direction
 import model.Point
-import communication.RobolabMessage
 import plotter.PathAttributes
 import plotter.plus
 import plotter.times
@@ -137,7 +136,7 @@ class Planet(
                         Point(it[3].toInt(), it[4].toInt()),
                         Direction.parse(it[5]),
                         if (it[6] == "blocked") -1 else it[6].toInt()
-                ) to setOf(PathAttributes.ANIMATED)
+                ) to emptySet<PathAttributes>()
             }
 
             return Planet(name, paths, target, start, startColor)

@@ -6,6 +6,9 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.ArcType
 import javafx.scene.text.Font
 import javafx.scene.text.TextAlignment
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * @author lars
@@ -107,11 +110,27 @@ class DrawHelper(
         canvas.fillText(number.toString(), center.x, center.y)
     }
 
+    fun arrow(position: Point2D, heading: Double, color: Color) {
+        val top = systemToReal(position + (Point2D(sin(heading), cos(heading)) * Plotter.ARROW_SIZE))
+        val left = systemToReal(position + (Point2D(sin(heading + 0.8 * PI), cos(heading + 0.8 * PI)) * Plotter.ARROW_SIZE))
+        val bottom = systemToReal(position + (Point2D(sin(heading + PI), cos(heading + PI)) * (Plotter.ARROW_SIZE / 3)))
+        val right = systemToReal(position + (Point2D(sin(heading - 0.8 * PI), cos(heading - 0.8 * PI)) * Plotter.ARROW_SIZE))
+
+        val points = listOf(top, left, bottom, right)
+
+        canvas.fill = color
+        canvas.fillPolygon(
+                points.map { it.x }.toDoubleArray(),
+                points.map { it.y }.toDoubleArray(),
+                points.size
+        )
+    }
+
 
     fun hLine(row: Double, color: Color) {
         val point = systemToReal(Point2D(0.0, row))
         canvas.stroke = color
-        canvas.strokeLine(plotter.widthReduce / 2, point.y, plotter.width+ plotter.widthReduce/2, point.y)
+        canvas.strokeLine(plotter.widthReduce / 2, point.y, plotter.width + plotter.widthReduce / 2, point.y)
     }
 
     fun vLine(col: Double, color: Color) {
