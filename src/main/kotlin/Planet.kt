@@ -1,3 +1,4 @@
+import javafx.geometry.Point2D
 import model.Direction
 import model.Point
 import plotter.PathAttributes
@@ -80,15 +81,12 @@ class Planet(
                         )
                     }
                     .distinct()
-                    .map {
-                        it.to2D()
-                    }
 
             if (points.isEmpty())
                 return Point.ZERO
 
-            val sum = points.reduce { acc, point ->
-                acc + point
+            val sum = points.fold(Point2D.ZERO) { acc, point ->
+                acc + point.to2D()
             }
 
             return Point(sum * (1 / points.size))

@@ -47,13 +47,6 @@ open class PointDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
             drawer.line(point.to2D(), getLineStart(point, direction), if (fromServer) Plotter.Companion.COLOR.LINE else Plotter.Companion.COLOR.ROBOT)
         }
 
-        if (pointerEvent.point == point) {
-            pointerEvent.direction?.let {
-                drawer.line(point.to2D(), getLineStart(point, it), Plotter.Companion.COLOR.HIGHLIGHT, Plotter.LineType.THICK)
-            }
-        }
-
-
         val background = when (point.getColor(planet.start, planet.startColor)) {
             Point.Color.RED -> Plotter.Companion.COLOR.RED
             Point.Color.BLUE -> Plotter.Companion.COLOR.BLUE

@@ -18,7 +18,12 @@ class DrawHelper(
 ) {
     private val canvas = plotter.canvas.graphicsContext2D
 
-    fun clear() = canvas.clearRect(plotter.widthReduce / 2, 0.0, plotter.width + plotter.widthReduce / 2, plotter.height)
+    fun clear() = canvas.clearRect(0.0, 0.0, width + plotter.widthReduce, height)
+
+    fun cleanSides() {
+        canvas.clearRect(0.0, 0.0, plotter.widthReduce / 2, height)
+        canvas.clearRect(width + plotter.widthReduce / 2, 0.0, width + plotter.widthReduce, height)
+    }
 
     fun dashed(from: Point2D, to: Point2D, color: Color) {
         val start = systemToReal(from)
@@ -39,7 +44,7 @@ class DrawHelper(
 
         val oldSize = canvas.lineWidth
         if (lineType == Plotter.LineType.THICK)
-            canvas.lineWidth = 4.0
+            canvas.lineWidth = THICK_LINE
         canvas.strokeLine(s.x, s.y, e.x, e.y)
         canvas.lineWidth = oldSize
     }
@@ -49,7 +54,7 @@ class DrawHelper(
 
         val oldSize = canvas.lineWidth
         if (lineType == Plotter.LineType.THICK)
-            canvas.lineWidth = 4.0
+            canvas.lineWidth = THICK_LINE
 
 
         canvas.beginPath()
@@ -77,7 +82,7 @@ class DrawHelper(
         canvas.fillRect(p.x, p.y, s.x, s.y)
         val oldSize = canvas.lineWidth
         if (lineType == Plotter.LineType.THICK)
-            canvas.lineWidth = 4.0
+            canvas.lineWidth = THICK_LINE
         canvas.strokeRect(p.x, p.y, s.x, s.y)
         canvas.lineWidth = oldSize
     }
@@ -88,7 +93,20 @@ class DrawHelper(
         val p = systemToReal(center - (radius to -radius))
         val r = radius * 2 * Plotter.WIDTH_GRID * plotter.scale
 
-        canvas.fillArc(p.x, p.y, r, r, 0.toDouble(), 360.toDouble(), ArcType.ROUND)
+        canvas.fillArc(p.x, p.y, r, r, 0.toDouble(), 360.toDouble(), ArcType.CHORD)
+    }
+
+    fun circleOutline(center: Point2D, radius: Double, lineColor: Color, lineType: Plotter.LineType = Plotter.LineType.NORMAL) {
+        canvas.stroke = lineColor
+
+        val p = systemToReal(center - (radius to -radius))
+        val r = radius * 2 * Plotter.WIDTH_GRID * plotter.scale
+
+        val oldSize = canvas.lineWidth
+        if (lineType == Plotter.LineType.THICK)
+            canvas.lineWidth = THICK_LINE
+        canvas.strokeArc(p.x, p.y, r, r, 0.toDouble(), 360.toDouble(), ArcType.CHORD)
+        canvas.lineWidth = oldSize
     }
 
     fun arc(center: Point2D, radius: Double, lineColor: Color, start: Double, extend: Double) {
@@ -130,30 +148,45 @@ class DrawHelper(
     fun hLine(row: Double, color: Color) {
         val point = systemToReal(Point2D(0.0, row))
         canvas.stroke = color
-        canvas.strokeLine(plotter.widthReduce / 2, point.y, plotter.width + plotter.widthReduce / 2, point.y)
+        canvas.strokeLine(0.0, point.y, width + plotter.widthReduce, point.y)
     }
 
     fun vLine(col: Double, color: Color) {
         val point = systemToReal(Point2D(col, 0.0))
         canvas.stroke = color
-        canvas.strokeLine(point.x, 0.0, point.x, plotter.height)
+        canvas.strokeLine(point.x, 0.0, point.x, height)
     }
 
-    fun fixedNumber(number: Int, position: Point2D, color: Color, fontSize: Double) {
+    fun colNumber(col: Int, color: Color, fontSize: Double) {
         canvas.fill = color
         canvas.textAlign = TextAlignment.CENTER
         canvas.textBaseline = VPos.CENTER
         canvas.font = Font.font(fontSize)
 
-        canvas.fillText(number.toString(), position.x + plotter.widthReduce / 2, position.y)
+        val position = systemToReal(Point2D(col.toDouble(), 0.0))
+
+        if (position.x - (plotter.widthReduce / 2) > fontSize * 3)
+            canvas.fillText(col.toString(), position.x, height - fontSize * 1.5)
+    }
+
+    fun rowNumber(row: Int, color: Color, fontSize: Double) {
+        canvas.fill = color
+        canvas.textAlign = TextAlignment.CENTER
+        canvas.textBaseline = VPos.CENTER
+        canvas.font = Font.font(fontSize)
+
+        val position = systemToReal(Point2D(0.0, row.toDouble()))
+
+        if (position.y < height - fontSize * 3)
+            canvas.fillText(row.toString(), plotter.widthReduce / 2 + fontSize * 1.5, position.y)
     }
 
 
-    fun getVisibleRows(): Pair<Int, Int> = Math.floor(realToSystem(Point2D(0.0, plotter.height)).y).toInt() to
+    fun getVisibleRows(): Pair<Int, Int> = Math.floor(realToSystem(Point2D(0.0, height)).y).toInt() to
             Math.ceil(realToSystem(Point2D(0.0, 0.0)).y).toInt()
 
-    fun getVisibleCols(): Pair<Int, Int> = Math.floor(realToSystem(Point2D(plotter.widthReduce / 2, 0.0)).x).toInt() to
-            Math.ceil(realToSystem(Point2D(plotter.width + plotter.widthReduce / 2, 0.0)).x).toInt()
+    fun getVisibleCols(): Pair<Int, Int> = Math.floor(realToSystem(Point2D(0.0, 0.0)).x).toInt() to
+            Math.ceil(realToSystem(Point2D(width + plotter.widthReduce, 0.0)).x).toInt()
 
     val gridWidth: Double
         get() = Plotter.WIDTH_GRID * plotter.scale
@@ -167,11 +200,15 @@ class DrawHelper(
     fun systemToReal(point: Point2D, translate: Point2D = plotter.translate): Point2D = Point2D(
             point.x,
             -point.y
-    ) * (Plotter.WIDTH_GRID * plotter.scale) + translate + Point2D(plotter.widthReduce / 2, 0.0)
+    ) * (Plotter.WIDTH_GRID * plotter.scale) + translate
 
 
     fun realToSystem(point: Point2D, translate: Point2D = plotter.translate): Point2D = (Point2D(
             (point.x - translate.x),
             (translate.y - point.y)
-    ) - Point2D(plotter.widthReduce / 2, 0.0)) * (1 / (Plotter.WIDTH_GRID * plotter.scale))
+    )) * (1 / (Plotter.WIDTH_GRID * plotter.scale))
+
+    companion object {
+        const val THICK_LINE = 4.0
+    }
 }

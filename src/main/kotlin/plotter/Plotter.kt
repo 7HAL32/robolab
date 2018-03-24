@@ -193,7 +193,7 @@ class Plotter(
     internal val height: Double
         get() = canvas.height - heightReduce
 
-    fun draw() {
+    private fun draw() {
         if (update || animationProgress < 1.0) {
             update = false
             drawer.clear()
@@ -213,6 +213,8 @@ class Plotter(
                     animationProgress = 1.0
                 }
             }
+
+            drawer.cleanSides()
         }
     }
 
@@ -228,7 +230,7 @@ class Plotter(
     fun resetScroll(point: Point? = null) = drawAfter {
         val p = point ?: planet.getCenter()
 
-        translate = Point2D(width / 2, height * 2 / 3) - drawer.systemToReal(p.to2D(), Point2D.ZERO)
+        translate = Point2D(width / 2 + widthReduce/2, height * 2 / 3) - drawer.systemToReal(p.to2D(), Point2D.ZERO)
         pointerEvent = PointerEvent.empty(pointerEvent.mouse)
     }
 

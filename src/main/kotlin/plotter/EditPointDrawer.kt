@@ -29,12 +29,15 @@ class EditPointDrawer(drawer: DrawHelper) : PointDrawer(drawer) {
         if (pointerEvent.point == point) {
             pointerEvent.direction?.let {
                 drawer.line(point.to2D(), getLineStart(point, it), Plotter.Companion.COLOR.HIGHLIGHT, Plotter.LineType.THICK)
+                drawer.circleOutline(getLineStart(point, it), GRAB_SIZE, Plotter.Companion.COLOR.HIGHLIGHT, Plotter.LineType.THICK)
             }
         }
 
         editStart?.let {
-            if (it.first == point)
+            if (it.first == point) {
                 drawer.line(point.to2D(), getLineStart(point, it.second), Plotter.Companion.COLOR.HIGHLIGHT, Plotter.LineType.THICK)
+                drawer.circleOutline(getLineStart(point, it.second), GRAB_SIZE, Plotter.Companion.COLOR.HIGHLIGHT, Plotter.LineType.THICK)
+            }
         }
 
         val background = when (point.getColor(planet.start, planet.startColor)) {
@@ -53,4 +56,8 @@ class EditPointDrawer(drawer: DrawHelper) : PointDrawer(drawer) {
     }
 
     fun isPathEditing(): Boolean = editStart != null
+
+    companion object {
+        const val GRAB_SIZE = 0.07
+    }
 }
