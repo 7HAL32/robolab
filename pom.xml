@@ -10,7 +10,7 @@
 
 
     <properties>
-        <kotlin.version>1.2.30</kotlin.version>
+        <kotlin.version>1.2.31</kotlin.version>
         <main.class>MainApp</main.class>
     </properties>
 
