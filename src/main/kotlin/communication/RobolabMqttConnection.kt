@@ -25,7 +25,7 @@ class RobolabMqttConnection : MqttConnection {
     override fun connect() = tryConnecting()
 
     private fun tryConnecting(): Boolean = try {
-        mqttClient = MqttClient(serverUri, uniqueId())
+        mqttClient = MqttClient(serverUri, uniqueId(), null)
         val mqttConnectOptions = MqttConnectOptions().apply {
             userName = login.username
             password = login.password.toCharArray()
