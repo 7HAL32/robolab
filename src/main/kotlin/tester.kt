@@ -3,10 +3,8 @@ import javafx.animation.Timeline
 import javafx.application.Application
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
-import javafx.geometry.Point2D
 import javafx.scene.control.ChoiceDialog
 import javafx.scene.control.TextInputDialog
-import javafx.scene.input.KeyCode
 import javafx.util.Duration
 import model.Point
 import plotter.Plotter
@@ -127,21 +125,6 @@ class MyView : View() {
         heightProperty().onChange {
             canvas.heightProperty().set(it - bar.height)
         }
-
-        setOnKeyPressed {
-            when (it.code) {
-                KeyCode.UP -> plotter.scrollBy(Point2D(0.0, KEYBOARD_SCROLL))
-                KeyCode.DOWN -> plotter.scrollBy(Point2D(0.0, -KEYBOARD_SCROLL))
-                KeyCode.LEFT -> plotter.scrollBy(Point2D(KEYBOARD_SCROLL, 0.0))
-                KeyCode.RIGHT -> plotter.scrollBy(Point2D(-KEYBOARD_SCROLL, 0.0))
-                KeyCode.PLUS -> plotter.zoomIn()
-                KeyCode.MINUS -> plotter.zoomOut()
-                KeyCode.DIGIT0, KeyCode.EQUALS -> plotter.zoomReset()
-                KeyCode.R -> plotter.resetScroll()
-                else -> {
-                }
-            }
-        }
     }
 
     init {
@@ -150,10 +133,6 @@ class MyView : View() {
         }))
         timeline.cycleCount = 1
         timeline.play()
-    }
-
-    companion object {
-        const val KEYBOARD_SCROLL = 20.0
     }
 }
 

@@ -1,3 +1,4 @@
+import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.layout.Pane
 import javafx.stage.Screen
@@ -21,10 +22,23 @@ abstract class BaseMapFragment : Fragment() {
                 val r = rightView(this)
                 right = r
 
+                val b = vbox {
+                    alignment = Pos.CENTER_LEFT
+                    prefHeight = 32.0
+                    val label = text {
+                        paddingAll = 8
+                    }
+                    plotter.positionLabel = label
+                    add(label)
+                }
+                bottom = b
+
                 widthProperty().onChange {
                     resizeableCanvas.widthProperty().set(it - r.width)
                 }
-                resizeableCanvas.heightProperty().bind(heightProperty())
+                heightProperty().onChange {
+                    resizeableCanvas.heightProperty().set(it - b.height)
+                }
             }
 
     override fun onDock() {

@@ -18,7 +18,10 @@ class DrawHelper(
 ) {
     private val canvas = plotter.canvas.graphicsContext2D
 
-    fun clear() = canvas.clearRect(0.0, 0.0, width, height)
+    fun clear() {
+        canvas.fill = Plotter.Companion.COLOR.BACKGROUND
+        canvas.fillRect(0.0, 0.0, width, height)
+    }
 
     fun dashed(from: Point2D, to: Point2D, color: Color) {
         val start = systemToReal(from)

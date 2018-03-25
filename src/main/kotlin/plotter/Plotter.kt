@@ -8,7 +8,10 @@ import javafx.animation.Timeline
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.geometry.Point2D
+import javafx.scene.Node
+import javafx.scene.input.KeyCode
 import javafx.scene.paint.Color
+import javafx.scene.text.Text
 import javafx.util.Duration
 import model.Direction
 import model.LiveOdometry
@@ -27,6 +30,11 @@ class Plotter(
 
     internal var scale = 1.0
     internal var translate = Point2D.ZERO
+
+    var positionLabel: Text? = null
+        set(value) = drawAfter {
+            field = value
+        }
 
     private val drawer = DrawHelper(this)
 
@@ -87,6 +95,10 @@ class Plotter(
                 zoomOut(Point2D(it.x, it.y))
         }
 
+        canvas.isFocusTraversable = true
+        canvas.requestFocus()
+        addKeybindings(canvas)
+
 
         val timeline = Timeline(
                 KeyFrame(
@@ -98,6 +110,23 @@ class Plotter(
         )
         timeline.cycleCount = INDEFINITE
         timeline.play()
+    }
+
+    private fun addKeybindings(view: Node) {
+        view.setOnKeyPressed {
+            when (it.code) {
+                KeyCode.UP -> scrollBy(Point2D(0.0, KEYBOARD_SCROLL))
+                KeyCode.DOWN -> scrollBy(Point2D(0.0, -KEYBOARD_SCROLL))
+                KeyCode.LEFT -> scrollBy(Point2D(KEYBOARD_SCROLL, 0.0))
+                KeyCode.RIGHT -> scrollBy(Point2D(-KEYBOARD_SCROLL, 0.0))
+                KeyCode.PLUS -> zoomIn()
+                KeyCode.MINUS -> zoomOut()
+                KeyCode.DIGIT0, KeyCode.EQUALS -> zoomReset()
+                KeyCode.R -> resetScroll()
+                else -> {
+                }
+            }
+        }
     }
 
     fun update(planet: Planet? = null, reset: Boolean = false) = drawAfter {
@@ -207,8 +236,20 @@ class Plotter(
                     animationProgress = 1.0
                 }
             }
+
+            positionLabel?.let {
+                it.text = getMouseText()
+            }
         }
     }
+
+    private fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
+
+    private fun getMouseText(): String = "Position: ${pointerEvent.mouse.x.format(2)}, ${pointerEvent.mouse.y.format(2)}${pointerEvent.point?.let {
+        " | Point: ${it.x}, ${it.y}"
+    }?:""}${pointerEvent.direction?.let {
+        " $it"
+    }?:""}"
 
     private fun drawAfter(block: () -> Unit) {
         block()
@@ -303,6 +344,8 @@ class Plotter(
 
         const val FPS = 50.0
         const val ANIMATION_TIME = 20.0
+
+        const val KEYBOARD_SCROLL = 20.0
 
         object COLOR {
             val RED: Color = Color.web("#F44336")
