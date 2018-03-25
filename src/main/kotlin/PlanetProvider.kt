@@ -14,8 +14,8 @@ class PlanetProvider(
 ) {
 
     companion object {
-        val planets: List<Path>
-            get() = Files.list(Paths.get("planet")).collect(Collectors.toList())
+        val planets: List<Planet>
+            get() = Files.list(Paths.get("planet")).collect(Collectors.toList()).map { Planet.loadFrom(it) }
 
         fun getColor(name: String): Point.Color {
             return Point.Color.UNDEFINED // TODO
@@ -23,7 +23,7 @@ class PlanetProvider(
 
         fun checkPlanet(name:String) = Files.exists(Paths.get("planet").resolve("$name.planet"))
 
-        fun getPlanet(name: String) = Planet.fromFile(Paths.get("planet").resolve("$name.planet"))
+        fun getPlanet(name: String) = Planet.loadFrom(Paths.get("planet").resolve("$name.planet"))
 
     }
 }

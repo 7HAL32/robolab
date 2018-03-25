@@ -22,7 +22,14 @@ class MainView : View() {
             }
             menu("Planet") {
                 PlanetProvider.planets.forEach {
-                    this.item(it.fileName.toString())
+                    val name =it.name
+                    this.item(name).action {
+                        find<FileMapFragment>(
+                                mapOf(
+                                        FileMapFragment::initPlanet to it
+                                )
+                        ).openWindow()
+                    }
                 }
             }
         }

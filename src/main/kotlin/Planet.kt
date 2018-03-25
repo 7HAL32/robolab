@@ -4,6 +4,7 @@ import model.Point
 import plotter.PathAttributes
 import plotter.plus
 import plotter.times
+import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -50,11 +51,18 @@ class Planet(
     )
 
     fun export(): List<String> {
-        val lines = ArrayList<String>()
+        val lines = mutableListOf<String>()
 
-        val h = if (startColor == Point.Color.UNDEFINED) "" else " ${startColor.name.toLowerCase()}"
+        if (name.isNotBlank()) {
+            lines.add("# name $name")
+        }
+
+        if (startColor != Point.Color.UNDEFINED) {
+            lines.add("# startColor ${startColor.toString().toLowerCase()}")
+        }
+
         start?.let {
-            lines.add("start ${it.x},${it.y}$h")
+            lines.add("start ${it.x},${it.y}")
         }
 
         paths.forEach {
@@ -97,7 +105,18 @@ class Planet(
         PathAttributes.ANIMATED in it.second
     }
 
+    fun saveTo(filePath: Path) {
+        val destination = if (Files.isDirectory(filePath)) {
+            filePath.resolve(name.toLowerCase()+FILE_ENDING)
+        } else {
+            filePath
+        }
+
+        Files.write(destination, export())
+    }
+
     companion object {
+        const val FILE_ENDING = ".planet"
 
         fun empty(): Planet = Planet(
                 "",
@@ -107,23 +126,31 @@ class Planet(
                 Point.Color.UNDEFINED
         )
 
-        fun fromFile(filePath: Path): Planet {
-            val name = filePath.fileName.toString()
-            val lines = filePath.toFile().readLines().map { it.split("[, ]".toRegex()).map { it.trim() } }
+        fun loadFrom(filePath: Path): Planet {
+            val lines = Files.readAllLines(filePath).map { it.split("[, ]".toRegex()).map { it.trim() } }
 
-            val startPointAndColor = lines.find { it.first() == "start" }?.let {
-                Point(it[1].toInt(), it[2].toInt()) to if (it.size > 3) {
-                    when (it[3].toUpperCase()) {
-                        "RED" -> Point.Color.RED
-                        "BLUE" -> Point.Color.BLUE
-                        else -> Point.Color.UNDEFINED
-                    }
-                } else Point.Color.UNDEFINED
-            } ?: (Point(0, 0) to Point.Color.UNDEFINED).also {
-                throw IllegalArgumentException("Cannot find a start point")
+            val name = lines.find {
+                it.contains("name")
+            }?.let {
+                it.dropWhile {
+                    !it.contains("name")
+                }.drop(1).joinToString(" ")
+            }?: filePath.fileName.toString().replace(FILE_ENDING, "")
+
+            val start = lines.find {
+                it.first() == "start"
+            }?.let {
+                Point(it[1].toInt(), it[2].toInt())
             }
-            val start = startPointAndColor.first
-            val startColor = startPointAndColor.second
+            val startColor = lines.find {
+                it.contains("startColor")
+            }?.let {
+                when (it.last().toUpperCase()) {
+                    "RED" -> Point.Color.RED
+                    "BLUE" -> Point.Color.BLUE
+                    else -> Point.Color.UNDEFINED
+                }
+            }?: Point.Color.UNDEFINED
 
             val target = lines.find { it.first() == "target" }?.let { Point(it[1].toInt(), it[2].toInt()) }
 

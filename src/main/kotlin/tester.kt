@@ -44,7 +44,7 @@ class MyView : View() {
             button("Load planet") {
                 action {
                     val dialog = ChoiceDialog("", PlanetProvider.planets.map {
-                        it.fileName.toString().replace(".planet", "")
+                        it.name
                     })
                     dialog.title = "Load planet"
                     dialog.headerText = "Load planet"
@@ -52,8 +52,10 @@ class MyView : View() {
 
                     val result = dialog.showAndWait()
                     result.ifPresent { name ->
-                        if (PlanetProvider.checkPlanet(name)) {
-                            plotter.update(PlanetProvider.getPlanet(name))
+                        PlanetProvider.planets.find {
+                            it.name == name
+                        }?.let {
+                            plotter.update(it)
                         }
                     }
                 }

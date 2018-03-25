@@ -17,7 +17,7 @@ class MqttMapFragment : BaseMapFragment() {
     fun setState(state: MqttMapState) {
         mapState?.destroy()
         mapState = state
-        state.planetMessages?.let { update(it) }
+        state.planetMessages.let { update(it) }
         modeLabel.text = state.stateText
     }
 
@@ -30,7 +30,6 @@ class MqttMapFragment : BaseMapFragment() {
 
     override fun rightView(rootNode: Node) = with(rootNode) {
         vbox {
-
             hbox {
                 button("live mode") {
                     action {
