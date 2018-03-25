@@ -1,4 +1,5 @@
 import javafx.scene.Node
+import javafx.scene.layout.Pane
 import javafx.stage.Screen
 import plotter.Plotter
 import tornadofx.*
@@ -8,17 +9,22 @@ import tornadofx.*
  */
 abstract class BaseMapFragment : Fragment() {
 
-    abstract fun rightView(rootNode: Node): Node
+    abstract fun rightView(rootNode: Node): Pane
     private val resizeableCanvas = ResizeableCanvas()
     protected val plotter = Plotter(resizeableCanvas)
 
     final override val root =
             borderpane {
-                minWidth = 1000.0
                 center = vbox {
                     add(resizeableCanvas)
                 }
-                right = rightView(this)
+                val r = rightView(this)
+                right = r
+
+                widthProperty().onChange {
+                    resizeableCanvas.widthProperty().set(it - r.width)
+                }
+                resizeableCanvas.heightProperty().bind(heightProperty())
             }
 
     override fun onDock() {
@@ -32,10 +38,5 @@ abstract class BaseMapFragment : Fragment() {
 
         currentStage?.isMaximized = true
         currentStage?.isIconified = true
-    }
-
-    init {
-        resizeableCanvas.widthProperty().bind(root.widthProperty())
-        resizeableCanvas.heightProperty().bind(root.heightProperty())
     }
 }

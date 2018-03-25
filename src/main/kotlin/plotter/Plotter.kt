@@ -181,21 +181,11 @@ class Plotter(
         }
     }
 
-    internal var heightReduce: Double = 0.0
-        set(value) = drawAfter {
-            field = value
-        }
-
-    internal var widthReduce: Double = 0.0
-        set(value) = drawAfter {
-            field = value
-        }
-
     internal val width: Double
-        get() = canvas.width - widthReduce
+        get() = canvas.width
 
     internal val height: Double
-        get() = canvas.height - heightReduce
+        get() = canvas.height
 
     private fun draw() {
         if (update || animationProgress < 1.0) {
@@ -217,8 +207,6 @@ class Plotter(
                     animationProgress = 1.0
                 }
             }
-
-            drawer.cleanSides()
         }
     }
 
@@ -236,8 +224,7 @@ class Plotter(
         val p = point ?: planet.getCenter()
         isUserTranslated = false
 
-        println("Reset scroll to $point at the size $width, $height")
-        translate = Point2D(width / 2 + widthReduce/2, height * 2 / 3) - drawer.systemToReal(p.to2D(), Point2D.ZERO)
+        translate = Point2D(width / 2, height * 2 / 3) - drawer.systemToReal(p.to2D(), Point2D.ZERO)
         pointerEvent = PointerEvent.empty(pointerEvent.mouse)
     }
 

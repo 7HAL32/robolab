@@ -26,10 +26,7 @@ class MyView : View() {
 
     override val root = borderpane {
         center = canvas
-        top = toolbar {
-            heightProperty().onChange {
-                plotter.heightReduce = it
-            }
+        val bar = toolbar {
             button("Enable edit mode") {
                 action {
                     if (plotter.editMode) {
@@ -124,6 +121,12 @@ class MyView : View() {
                 }
             }
         }
+        top = bar
+
+        canvas.widthProperty().bind(widthProperty())
+        heightProperty().onChange {
+            canvas.heightProperty().set(it - bar.height)
+        }
 
         setOnKeyPressed {
             when (it.code) {
@@ -142,9 +145,6 @@ class MyView : View() {
     }
 
     init {
-        canvas.widthProperty().bind(root.widthProperty())
-        canvas.heightProperty().bind(root.heightProperty())
-
         val timeline = Timeline(KeyFrame(Duration.seconds(0.2), EventHandler<ActionEvent> {
             plotter.resetScroll()
         }))

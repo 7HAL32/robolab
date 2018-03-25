@@ -53,9 +53,6 @@ class MqttMapFragment : BaseMapFragment() {
                 }
 
             }
-            widthProperty().onChange {
-                plotter.widthReduce = it
-            }
             planetNumberLabel = label()
             modeLabel = label()
             groupLabel = label()

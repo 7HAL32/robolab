@@ -23,9 +23,6 @@ class FileMapFragment : BaseMapFragment() {
                     }
                 }
             }
-            widthProperty().onChange {
-                plotter.widthReduce = it
-            }
             listView = listview {
                 isEditable = true
                 selectionModel.selectedItemProperty().addListener { _, _, newValue ->

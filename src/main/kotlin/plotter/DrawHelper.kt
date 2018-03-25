@@ -18,12 +18,7 @@ class DrawHelper(
 ) {
     private val canvas = plotter.canvas.graphicsContext2D
 
-    fun clear() = canvas.clearRect(0.0, 0.0, width + plotter.widthReduce, height)
-
-    fun cleanSides() {
-        canvas.clearRect(0.0, 0.0, plotter.widthReduce / 2, height)
-        canvas.clearRect(width + plotter.widthReduce / 2, 0.0, width + plotter.widthReduce, height)
-    }
+    fun clear() = canvas.clearRect(0.0, 0.0, width, height)
 
     fun dashed(from: Point2D, to: Point2D, color: Color) {
         val start = systemToReal(from)
@@ -148,7 +143,7 @@ class DrawHelper(
     fun hLine(row: Double, color: Color) {
         val point = systemToReal(Point2D(0.0, row))
         canvas.stroke = color
-        canvas.strokeLine(0.0, point.y, width + plotter.widthReduce, point.y)
+        canvas.strokeLine(0.0, point.y, width, point.y)
     }
 
     fun vLine(col: Double, color: Color) {
@@ -165,7 +160,7 @@ class DrawHelper(
 
         val position = systemToReal(Point2D(col.toDouble(), 0.0))
 
-        if (position.x - (plotter.widthReduce / 2) > fontSize * 3)
+        if (position.x > fontSize * 3)
             canvas.fillText(col.toString(), position.x, height - fontSize * 1.5)
     }
 
@@ -178,7 +173,7 @@ class DrawHelper(
         val position = systemToReal(Point2D(0.0, row.toDouble()))
 
         if (position.y < height - fontSize * 3)
-            canvas.fillText(row.toString(), plotter.widthReduce / 2 + fontSize * 1.5, position.y)
+            canvas.fillText(row.toString(), fontSize * 1.5, position.y)
     }
 
 
@@ -186,7 +181,7 @@ class DrawHelper(
             Math.ceil(realToSystem(Point2D(0.0, 0.0)).y).toInt()
 
     fun getVisibleCols(): Pair<Int, Int> = Math.floor(realToSystem(Point2D(0.0, 0.0)).x).toInt() to
-            Math.ceil(realToSystem(Point2D(width + plotter.widthReduce, 0.0)).x).toInt()
+            Math.ceil(realToSystem(Point2D(width, 0.0)).x).toInt()
 
     val gridWidth: Double
         get() = Plotter.WIDTH_GRID * plotter.scale
