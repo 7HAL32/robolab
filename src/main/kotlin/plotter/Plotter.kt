@@ -42,11 +42,12 @@ class Plotter(
     private var update: Boolean = false
 
     private var animationProgress: Double = 1.0
+    private var isUserTranslated: Boolean = false
 
     init {
 
         canvas.addDrawHook {
-            update()
+            update(reset = !isUserTranslated)
         }
 
         var scroll: Point2D = Point2D.ZERO
@@ -59,7 +60,7 @@ class Plotter(
         }
         canvas.setOnMouseDragged {
             if (isPathEditing) {
-                testPointer(Point2D(it.x, it.y))
+                checkPosition(Point2D(it.x, it.y))
             } else {
                 scrollBy(scroll.subtract(it.x, it.y).multiply((-1).toDouble()))
                 scroll = Point2D(it.x, it.y)
@@ -67,7 +68,7 @@ class Plotter(
         }
         canvas.setOnMouseReleased {
             if (isPathEditing) {
-                testPointer(Point2D(it.x, it.y))
+                checkPosition(Point2D(it.x, it.y))
                 val p = finishPathEditing()
 
                 p?.let {
@@ -77,7 +78,7 @@ class Plotter(
             }
         }
         canvas.setOnMouseMoved {
-            testPointer(Point2D(it.x, it.y))
+            checkPosition(Point2D(it.x, it.y))
         }
         canvas.setOnScroll {
             if (it.deltaY > 0)
@@ -105,10 +106,13 @@ class Plotter(
 
             if (reset) {
                 planetHistory.reset(it)
-                resetScroll()
             } else {
                 planetHistory.push(it)
             }
+        }
+        if (reset) {
+            zoomReset()
+            resetScroll()
         }
     }
 
@@ -225,11 +229,14 @@ class Plotter(
 
     fun scrollBy(d: Point2D) = drawAfter {
         translate += d
+        isUserTranslated = true
     }
 
     fun resetScroll(point: Point? = null) = drawAfter {
         val p = point ?: planet.getCenter()
+        isUserTranslated = false
 
+        println("Reset scroll to $point at the size $width, $height")
         translate = Point2D(width / 2 + widthReduce/2, height * 2 / 3) - drawer.systemToReal(p.to2D(), Point2D.ZERO)
         pointerEvent = PointerEvent.empty(pointerEvent.mouse)
     }
@@ -243,6 +250,7 @@ class Plotter(
         val newPoint = drawer.systemToReal(dataPoint)
 
         translate -= (newPoint - zoomTo)
+        isUserTranslated = true
     }
 
     fun zoomOut(zoomTo: Point2D = Point2D(width / 2, height / 2)) = drawAfter {
@@ -253,6 +261,7 @@ class Plotter(
             scale = max(0.1, scale - 0.05)
         val newPoint = drawer.systemToReal(dataPoint)
         translate -= (newPoint - zoomTo)
+        isUserTranslated = true
     }
 
     fun zoomReset(zoomTo: Point2D = Point2D(width / 2, height / 2)) = drawAfter {
@@ -261,9 +270,10 @@ class Plotter(
         pointerEvent = PointerEvent.empty(pointerEvent)
         val newPoint = drawer.systemToReal(dataPoint)
         translate -= (newPoint - zoomTo)
+        isUserTranslated = true
     }
 
-    fun testPointer(point: Point2D) = drawAfter {
+    private fun checkPosition(point: Point2D) = drawAfter {
         val mouse = drawer.realToSystem(point)
 
         val col = Math.round(mouse.x).toInt()

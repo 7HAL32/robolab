@@ -48,7 +48,7 @@ class FileMapFragment : BaseMapFragment() {
         val list: ObservableList<String> = observableList<String>(*planet.export().toTypedArray())
 
         listView.items = list
-        plotter.update(planet)
+        plotter.update(planet, true)
     }
 
     private fun save() {
