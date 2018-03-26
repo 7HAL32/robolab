@@ -19,6 +19,7 @@ import model.Path
 import model.Point
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * @author lars
@@ -249,7 +250,7 @@ class Plotter(
         " | Point: ${it.x}, ${it.y}"
     }?:""}${pointerEvent.direction?.let {
         " $it"
-    }?:""}"
+    }?:""} | Zoom: ${(scale * 100).roundToInt()}%"
 
     private fun drawAfter(block: () -> Unit) {
         block()

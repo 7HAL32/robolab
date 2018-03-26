@@ -6,9 +6,7 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.ArcType
 import javafx.scene.text.Font
 import javafx.scene.text.TextAlignment
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 /**
  * @author lars
@@ -42,7 +40,7 @@ class DrawHelper(
 
         val oldSize = canvas.lineWidth
         if (lineType == Plotter.LineType.THICK)
-            canvas.lineWidth = THICK_LINE
+            canvas.lineWidth = max(min(THICK_LINE * plotter.scale, THICK_LINE), 1.0)
         canvas.strokeLine(s.x, s.y, e.x, e.y)
         canvas.lineWidth = oldSize
     }
@@ -71,7 +69,7 @@ class DrawHelper(
     }
 
     fun rect(bottomLeft: Point2D, size: Point2D, background: Color, lineColor: Color, lineType: Plotter.LineType = Plotter.LineType.NORMAL) {
-        canvas.stroke = lineColor
+        canvas.stroke = if (plotter.scale < ZOOM_THRESHOLD && lineType != Plotter.LineType.THICK) background else lineColor
         canvas.fill = background
 
         val p = systemToReal(bottomLeft)
@@ -117,13 +115,15 @@ class DrawHelper(
     }
 
     fun number(number: Int, position: Point2D, color: Color, fontSize: Double) {
-        canvas.fill = color
-        canvas.textAlign = TextAlignment.CENTER
-        canvas.textBaseline = VPos.CENTER
-        canvas.font = Font.font(fontSize)
+        if (plotter.scale >= ZOOM_THRESHOLD) {
+            canvas.fill = color
+            canvas.textAlign = TextAlignment.CENTER
+            canvas.textBaseline = VPos.CENTER
+            canvas.font = Font.font(fontSize * plotter.scale / 2 + fontSize / 2)
 
-        val center = systemToReal(position)
-        canvas.fillText(number.toString(), center.x, center.y)
+            val center = systemToReal(position)
+            canvas.fillText(number.toString(), center.x, center.y)
+        }
     }
 
     fun arrow(position: Point2D, heading: Double, color: Color) {
@@ -208,5 +208,6 @@ class DrawHelper(
 
     companion object {
         const val THICK_LINE = 4.0
+        const val ZOOM_THRESHOLD = 0.4
     }
 }

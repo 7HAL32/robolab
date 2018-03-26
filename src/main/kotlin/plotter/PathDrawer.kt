@@ -82,7 +82,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                 drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
         } else {
             path.weight?.let {
-                drawer.number(it, x1, getWeightColor(t), 12.0)
+                drawer.number(it, x1, getWeightColor(t), PATH_WEIGHT)
             }
         }
     }
@@ -152,7 +152,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                     drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
                 } else {
                     path.weight?.let {
-                        drawer.number(it, x1, Plotter.Companion.COLOR.WEIGHT, 12.0)
+                        drawer.number(it, x1, Plotter.Companion.COLOR.WEIGHT, PATH_WEIGHT)
                     }
                 }
             }
@@ -178,7 +178,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                     drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
                 } else {
                     path.weight?.let {
-                        drawer.number(it, x1, getWeightColor(t), 12.0)
+                        drawer.number(it, x1, getWeightColor(t), PATH_WEIGHT)
                     }
                 }
             }
@@ -226,7 +226,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
             }
         } else {
             weight?.let {
-                drawer.number(it, x1, getWeightColor(t), 12.0)
+                drawer.number(it, x1, getWeightColor(t), PATH_WEIGHT)
             }
         }
     }
@@ -283,7 +283,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                 drawer.line(x1, x2, Plotter.Companion.COLOR.BLOCKED, Plotter.LineType.THICK)
         } else {
             path.weight?.let {
-                drawer.number(it, x1, getWeightColor(t), 12.0)
+                drawer.number(it, x1, getWeightColor(t), PATH_WEIGHT)
             }
         }
     }
@@ -291,4 +291,8 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
     private fun pointsToDeg(p1: Point2D, p2: Point2D): Double = with(p2 - p1) {
         acos(y / sqrt(x * x + y * y))
     } * if (p2.x > p1.x) 1.0 else -1.0
+
+    companion object {
+        const val PATH_WEIGHT = 16.0
+    }
 }
