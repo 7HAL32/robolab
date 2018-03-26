@@ -24,7 +24,7 @@ fun List<RobolabMessage>.toPlanet(): Planet {
         it as? RobolabMessage
         .PathMessage
     }.map { it.path to emptySet<PathAttributes>() }
-    val target = (firstOrNull { it is RobolabMessage.TargetMessage } as? RobolabMessage.TargetMessage)?.target
+    val target = (lastOrNull { it is RobolabMessage.TargetMessage } as? RobolabMessage.TargetMessage)?.target
     val startColor = Point.Color.UNDEFINED
     return Planet(name ?: "", paths, target, startPoint /* TODO */, startColor)
 }
