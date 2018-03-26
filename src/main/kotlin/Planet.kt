@@ -54,11 +54,11 @@ class Planet(
         val lines = mutableListOf<String>()
 
         if (name.isNotBlank()) {
-            lines.add("# name $name")
+            lines.add("#! name $name")
         }
 
         if (startColor != Point.Color.UNDEFINED) {
-            lines.add("# startColor ${startColor.toString().toLowerCase()}")
+            lines.add("#! startColor ${startColor.toString().toLowerCase()}")
         }
 
         start?.let {

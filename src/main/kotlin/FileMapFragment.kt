@@ -46,12 +46,10 @@ class FileMapFragment : BaseMapFragment() {
         while (matcher.find()) {
             val styleClass = (when {
                 matcher.group("KEYWORD") != null -> "keyword"
-                matcher.group("PAREN") != null -> "paren"
-                matcher.group("BRACE") != null -> "brace"
-                matcher.group("BRACKET") != null -> "bracket"
-                matcher.group("SEMICOLON") != null -> "semicolon"
-                matcher.group("STRING") != null -> "string"
+                matcher.group("DIRECTION") != null -> "direction"
+                matcher.group("NUMBER") != null -> "number"
                 matcher.group("COMMENT") != null -> "comment"
+                matcher.group("STRING") != null -> "string"
                 else -> ""
             })
             spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd)
@@ -82,21 +80,17 @@ class FileMapFragment : BaseMapFragment() {
         private val KEYWORDS = arrayOf("name", "startColor", "start", "target")
 
         private val KEYWORD_PATTERN = "\\b(" + KEYWORDS.joinToString("|") + ")\\b"
-        private const val PAREN_PATTERN = "\\(|\\)"
-        private const val BRACE_PATTERN = "\\{|\\}"
-        private const val BRACKET_PATTERN = "\\[|\\]"
-        private const val SEMICOLON_PATTERN = "\\;"
-        private const val STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\""
-        private const val COMMENT_PATTERN = "//[^\n]*" + "|" + "/\\*(.|\\R)*?\\*/"
+        private const val DIRECTION_PATTERN = "\\b([N|E|W|S])\\b"
+        private const val NUMBER_PATTERN = "(-?[0-9]+)"
+        private const val COMMENT_PATTERN = "#!|#[^\n|!]*"
+        private const val STRING_PATTERN = "[a-zA-Z]"
 
         private val PATTERN = Pattern.compile(
                 "(?<KEYWORD>" + KEYWORD_PATTERN + ")"
-                        + "|(?<PAREN>" + PAREN_PATTERN + ")"
-                        + "|(?<BRACE>" + BRACE_PATTERN + ")"
-                        + "|(?<BRACKET>" + BRACKET_PATTERN + ")"
-                        + "|(?<SEMICOLON>" + SEMICOLON_PATTERN + ")"
-                        + "|(?<STRING>" + STRING_PATTERN + ")"
+                        + "|(?<DIRECTION>" + DIRECTION_PATTERN + ")"
+                        + "|(?<NUMBER>" + NUMBER_PATTERN + ")"
                         + "|(?<COMMENT>" + COMMENT_PATTERN + ")"
+                        + "|(?<STRING>" + STRING_PATTERN + ")"
         )
     }
 }
