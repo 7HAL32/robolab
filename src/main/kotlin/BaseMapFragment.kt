@@ -1,7 +1,6 @@
 import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.layout.Pane
-import javafx.stage.Screen
 import plotter.Plotter
 import tornadofx.*
 
@@ -40,17 +39,4 @@ abstract class BaseMapFragment : Fragment() {
                     resizeableCanvas.heightProperty().set(it - b.height)
                 }
             }
-
-    override fun onDock() {
-        val screen = Screen.getPrimary()
-        val bounds = screen.visualBounds
-
-        currentStage?.x = bounds.minX + bounds.width / 6
-        currentStage?.y = bounds.minY + bounds.height / 6
-        currentStage?.width = bounds.width * 2 / 3
-        currentStage?.height = bounds.height * 2 / 3
-
-        currentStage?.isMaximized = true
-        currentStage?.isIconified = true
-    }
 }

@@ -3,6 +3,8 @@ import communication.Login
 import communication.MessageManager
 import javafx.application.Platform
 import javafx.scene.control.TableView
+import javafx.stage.Modality
+import javafx.stage.StageStyle
 import tornadofx.*
 import java.io.File
 
@@ -28,13 +30,12 @@ class MainView : View() {
                                 mapOf(
                                         FileMapFragment::initPlanet to it
                                 )
-                        ).openWindow()
+                        ).openWindow(StageStyle.DECORATED, Modality.NONE, owner = null)
                     }
                 }
             }
         }
         this.center = vbox {
-
             button("connect") {
                 action {
                     if (!messageManager.mqttConnection.mqttConnection.mqttClient.isConnected) {
@@ -57,7 +58,7 @@ class MainView : View() {
                                             MqttMapFragment::groupId to it.groupName,
                                             MqttMapFragment::messageManager to messageManager
                                     )
-                            ).openWindow()
+                            ).openWindow(StageStyle.DECORATED, Modality.NONE, owner = null)
                         }
                     }
                 }
