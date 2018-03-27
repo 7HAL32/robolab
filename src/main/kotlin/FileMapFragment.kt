@@ -1,8 +1,10 @@
 import javafx.scene.Node
+import javafx.stage.FileChooser
 import org.fxmisc.richtext.CodeArea
 import org.fxmisc.richtext.model.StyleSpans
 import org.fxmisc.richtext.model.StyleSpansBuilder
 import tornadofx.*
+import java.nio.file.Files
 import java.util.*
 import java.util.regex.Pattern
 
@@ -31,10 +33,18 @@ class FileMapFragment : BaseMapFragment() {
             codeArea.richChanges()
                     .filter({ ch -> ch.inserted != ch.removed })
                     .subscribe({ _ ->
+                        update(
+                                codeArea.text.split("\n").filter {
+                                    it.isNotBlank()
+                                }
+                        )
                         codeArea.setStyleSpans(0, computeHighlighting(codeArea.text))
                     })
-            codeArea.minWidth = 200.0
+            codeArea.minWidth = 250.0
             codeArea.minHeight = 300.0
+            codeArea.style {
+                fontSize = Dimension(16.0, Dimension.LinearUnits.pt)
+            }
             add(codeArea)
         }
     }
@@ -72,8 +82,22 @@ class FileMapFragment : BaseMapFragment() {
         plotter.update(planet, true)
     }
 
-    private fun save() {
+    private fun update(lines: List<String>) {
+        planet = Planet.loadStringList(lines)
+        plotter.update(planet)
+    }
 
+    private fun save() {
+        val dialog = FileChooser()
+        dialog.title = "Save planet to file"
+        dialog.initialFileName = planet.name.toLowerCase().replace(" ", "_") + ".planet"
+        dialog.extensionFilters.add(FileChooser.ExtensionFilter("Planet file", ".planet"))
+        try {
+            val file = dialog.showSaveDialog(currentWindow!!)
+            Files.write(file.toPath(), planet.export())
+        } catch (e: Exception) {
+
+        }
     }
 
     companion object {

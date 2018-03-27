@@ -107,7 +107,7 @@ class Planet(
 
     fun saveTo(filePath: Path) {
         val destination = if (Files.isDirectory(filePath)) {
-            filePath.resolve(name.toLowerCase()+FILE_ENDING)
+            filePath.resolve(name.toLowerCase() + FILE_ENDING)
         } else {
             filePath
         }
@@ -126,8 +126,10 @@ class Planet(
                 Point.Color.UNDEFINED
         )
 
-        fun loadFrom(filePath: Path): Planet {
-            val lines = Files.readAllLines(filePath).map { it.split("[, ]".toRegex()).map { it.trim() } }
+        fun loadFrom(filePath: Path): Planet = loadStringList(Files.readAllLines(filePath))
+
+        fun loadStringList(planet: List<String>, defaultName: String = ""): Planet {
+            val lines = planet.map { it.split("[, ]".toRegex()).map { it.trim() } }
 
             val name = lines.find {
                 it.contains("name")
@@ -135,12 +137,16 @@ class Planet(
                 it.dropWhile {
                     !it.contains("name")
                 }.drop(1).joinToString(" ")
-            }?: filePath.fileName.toString().replace(FILE_ENDING, "")
+            } ?: defaultName
 
             val start = lines.find {
                 it.first() == "start"
             }?.let {
-                Point(it[1].toInt(), it[2].toInt())
+                try {
+                    Point(it[1].toInt(), it[2].toInt())
+                } catch (e: Exception) {
+                    null
+                }
             }
             val startColor = lines.find {
                 it.contains("startColor")
@@ -150,19 +156,39 @@ class Planet(
                     "BLUE" -> Point.Color.BLUE
                     else -> Point.Color.UNDEFINED
                 }
-            }?: Point.Color.UNDEFINED
+            } ?: Point.Color.UNDEFINED
 
-            val target = lines.find { it.first() == "target" }?.let { Point(it[1].toInt(), it[2].toInt()) }
+            val target = lines.find { it.first() == "target" }?.let {
+                try {
+                    Point(it[1].toInt(), it[2].toInt())
+                } catch (e: Exception) {
+                    null
+                }
+            }
 
             val paths = lines.filter { it.first().toIntOrNull() != null }.map {
-                model.Path(
-                        Point(it[0].toInt(), it[1].toInt()),
-                        Direction.parse(it[2]),
-                        Point(it[3].toInt(), it[4].toInt()),
-                        Direction.parse(it[5]),
-                        if (it[6] == "blocked") -1 else it[6].toInt()
-                ) to emptySet<PathAttributes>()
-            }
+                try {
+                    model.Path(
+                            Point(it[0].toInt(), it[1].toInt()),
+                            Direction.parse(it[2]),
+                            Point(it[3].toInt(), it[4].toInt()),
+                            Direction.parse(it[5]),
+                            if (it[6] == "blocked") -1 else it[6].toInt()
+                    ) to emptySet<PathAttributes>()
+                } catch (e: Exception) {
+                    try {
+                        model.Path(
+                                Point(it[0].toInt(), it[1].toInt()),
+                                Direction.parse(it[2]),
+                                Point(it[3].toInt(), it[4].toInt()),
+                                Direction.parse(it[5]),
+                                null
+                        ) to emptySet<PathAttributes>()
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            }.filterNotNull()
 
             return Planet(name, paths, target, start, startColor)
         }
