@@ -1,9 +1,9 @@
-package plotter
+package plotter.drawer
 
 import Planet
-import javafx.scene.paint.Color
 import model.Direction
 import model.Point
+import plotter.*
 
 /**
  * @author lars
@@ -20,5 +20,5 @@ abstract class AbsDrawer(
                 Direction.WEST -> point.to2D() - (shift to 0.toDouble())
             }
 
-    abstract fun draw(planet: Planet, pointerEvent:PointerEvent, t: Double)
+    abstract fun draw(planet: Planet, pointerEvent: PointerEvent, t: Double)
 }

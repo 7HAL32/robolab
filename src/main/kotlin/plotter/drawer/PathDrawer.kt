@@ -1,4 +1,4 @@
-package plotter
+package plotter.drawer
 
 import Planet
 import javafx.geometry.Point2D
@@ -6,6 +6,7 @@ import javafx.scene.paint.Color
 import model.Direction
 import model.Path
 import model.Point
+import plotter.*
 import kotlin.math.acos
 import kotlin.math.pow
 import kotlin.math.sqrt

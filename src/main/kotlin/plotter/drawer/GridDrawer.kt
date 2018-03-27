@@ -1,4 +1,7 @@
-package plotter
+package plotter.drawer
+
+import plotter.DrawHelper
+import plotter.Plotter
 
 /**
  * @author lars

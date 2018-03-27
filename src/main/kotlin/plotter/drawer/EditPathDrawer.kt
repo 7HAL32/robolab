@@ -1,9 +1,13 @@
-package plotter
+package plotter.drawer
 
 import Planet
 import model.Direction
 import model.Path
 import model.Point
+import plotter.DrawHelper
+import plotter.PathAttributes
+import plotter.Plotter
+import plotter.PointerEvent
 
 /**
  * @author lars

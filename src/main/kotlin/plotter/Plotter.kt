@@ -17,6 +17,7 @@ import model.Direction
 import model.LiveOdometry
 import model.Path
 import model.Point
+import plotter.drawer.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -43,6 +44,8 @@ class Plotter(
     private var pointDrawer = PointDrawer(drawer)
     private var pathDrawer = PathDrawer(drawer)
     private var odometryDrawer = OdometryDrawer(drawer)
+    private var robotPositionDrawer = RobotPositionDrawer(drawer)
+
     private var liveOdometry = emptyList<LiveOdometry>()
     private val planetHistory = History(Planet.empty())
     val planet
@@ -230,6 +233,8 @@ class Plotter(
 
             pointDrawer.draw(planet, pointerEvent, animationProgress)
             pathDrawer.draw(planet, pointerEvent, animationProgress)
+
+            robotPositionDrawer.draw(planet, pointerEvent, animationProgress)
 
             if (animationProgress < 1.0) {
                 animationProgress += 1 / (FPS * ANIMATION_TIME)

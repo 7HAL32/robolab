@@ -1,9 +1,13 @@
-package plotter
+package plotter.drawer
 
 import Planet
 import javafx.geometry.Point2D
 import model.Direction
 import model.Point
+import plotter.DrawHelper
+import plotter.Plotter
+import plotter.PointerEvent
+import plotter.minus
 
 /**
  * @author lars

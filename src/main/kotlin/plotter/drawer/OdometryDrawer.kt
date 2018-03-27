@@ -1,6 +1,8 @@
-package plotter
+package plotter.drawer
 
 import model.LiveOdometry
+import plotter.DrawHelper
+import plotter.Plotter
 
 /**
  * @author lars

@@ -1,10 +1,12 @@
-package plotter
+package plotter.drawer
 
 import Planet
 import javafx.geometry.Point2D
 import javafx.scene.paint.Color
 import model.Direction
 import model.Point
+import plotter.*
+import kotlin.math.PI
 
 /**
  * @author lars

@@ -1,5 +1,7 @@
 package model
 
+import kotlin.math.PI
+
 /**
  * @author leon
  */
@@ -14,6 +16,13 @@ enum class Direction {
         Direction.EAST -> "E"
         Direction.SOUTH -> "S"
         Direction.WEST -> "W"
+    }
+
+    fun toHeading():Double = when(this) {
+        Direction.NORTH -> 0.0
+        Direction.EAST -> PI / 2
+        Direction.SOUTH -> PI
+        Direction.WEST -> 3 * PI / 2
     }
 
     companion object {
