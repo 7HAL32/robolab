@@ -51,6 +51,11 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         else -> Plotter.Companion.COLOR.LINE
     }
 
+    private fun getLineWeight(attributes: Set<PathAttributes>): Plotter.LineType = when {
+        attributes.contains(PathAttributes.HIGHLIGHTED) -> Plotter.LineType.THICK
+        else -> Plotter.LineType.NORMAL
+    }
+
     private fun getWeightColor(t: Double): Color {
         val pos = Math.max(Math.min((t - 0.4) * 5, 1.0), 0.0)
         return Plotter.Companion.COLOR.BACKGROUND.interpolate(Plotter.Companion.COLOR.WEIGHT, pos)
@@ -64,7 +69,8 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         drawer.line(
                 start,
                 e,
-                getLineColor(path, attributes)
+                getLineColor(path, attributes),
+                getLineWeight(attributes)
         )
 
         if (t < 1.0) {
@@ -102,7 +108,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
     private fun printPathSamePointSameDirection(path: Path, attributes: Set<PathAttributes>) = with(path) {
         val s = getLineStart(startPoint, startDirection, Plotter.RADIUS)
 
-        drawer.line(getLineStart(startPoint, startDirection), s, getLineColor(path, attributes))
+        drawer.line(getLineStart(startPoint, startDirection), s, getLineColor(path, attributes), getLineWeight(attributes))
         val (x1, x2) = when (path.startDirection) {
             Direction.NORTH, Direction.SOUTH -> (s - (Plotter.LINE_HALF to 0.0)) to (s + (Plotter.LINE_HALF to 0.0))
             Direction.EAST, Direction.WEST -> (s - (0.0 to Plotter.LINE_HALF)) to (s + (0.0 to Plotter.LINE_HALF))
@@ -125,8 +131,8 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         val t2 = Math.min(Math.max((distance / s.distance(e)) * (t - (Math.PI * Plotter.RADIUS / distance)), 0.0), 1.0)
         val t3 = Math.min(Math.max((distance / (Math.PI * Plotter.RADIUS)) * (t - 1 + ((Math.PI * Plotter.RADIUS) / distance)), 0.0), 1.0)
 
-        drawer.line(getLineStart(startPoint, startDirection), s, getLineColor(path, attributes))
-        drawer.line(getLineStart(endPoint, endDirection), e, getLineColor(path, attributes))
+        drawer.line(getLineStart(startPoint, startDirection), s, getLineColor(path, attributes), getLineWeight(attributes))
+        drawer.line(getLineStart(endPoint, endDirection), e, getLineColor(path, attributes), getLineWeight(attributes))
         val sides = getUsedPointSides(planet, path.startPoint)
         when (startDirection) {
             Direction.NORTH, Direction.SOUTH -> {
@@ -137,8 +143,8 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
                 //May be changed by swap the directions
                 val invert = (startDirection == Direction.NORTH && shift < 0) || (startDirection == Direction.SOUTH && shift > 0)
 
-                drawer.arc(c1, Plotter.RADIUS, getLineColor(path, attributes), if (startDirection == (if (invert) Direction.SOUTH else Direction.NORTH)) 0.0 else 180.0, (if (invert) -1 else 1) * 180.0 * t1)
-                drawer.arc(c2, Plotter.RADIUS, getLineColor(path, attributes), if (startDirection == (if (invert) Direction.NORTH else Direction.SOUTH)) 0.0 else 180.0, (if (invert) -1 else 1) * 180.0 * t3)
+                drawer.arc(c1, Plotter.RADIUS, getLineColor(path, attributes), if (startDirection == (if (invert) Direction.SOUTH else Direction.NORTH)) 0.0 else 180.0, (if (invert) -1 else 1) * 180.0 * t1, getLineWeight(attributes))
+                drawer.arc(c2, Plotter.RADIUS, getLineColor(path, attributes), if (startDirection == (if (invert) Direction.NORTH else Direction.SOUTH)) 0.0 else 180.0, (if (invert) -1 else 1) * 180.0 * t3, getLineWeight(attributes))
                 val start = c1 + (shift to 0.0)
                 val end = c2 + (shift to 0.0)
                 drawer.line(start, start + (end - start) * t2, getLineColor(path, attributes))
@@ -163,11 +169,11 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
 
                 val invert = (startDirection == Direction.EAST && shift < 0) || (startDirection == Direction.WEST && shift > 0)
 
-                drawer.arc(c1, Plotter.RADIUS, getLineColor(path, attributes), if (startDirection == (if (invert) Direction.EAST else Direction.WEST)) 90.0 else 270.0, (if (invert) -1 else 1) * 180.0 * t1)
-                drawer.arc(c2, Plotter.RADIUS, getLineColor(path, attributes), if (startDirection == (if (invert) Direction.WEST else Direction.EAST)) 90.0 else 270.0, (if (invert) -1 else 1) * 180.0 * t3)
+                drawer.arc(c1, Plotter.RADIUS, getLineColor(path, attributes), if (startDirection == (if (invert) Direction.EAST else Direction.WEST)) 90.0 else 270.0, (if (invert) -1 else 1) * 180.0 * t1, getLineWeight(attributes))
+                drawer.arc(c2, Plotter.RADIUS, getLineColor(path, attributes), if (startDirection == (if (invert) Direction.WEST else Direction.EAST)) 90.0 else 270.0, (if (invert) -1 else 1) * 180.0 * t3, getLineWeight(attributes))
                 val start = c1 + (0.0 to shift)
                 val end = c2 + (0.0 to shift)
-                drawer.line(start, start + (end - start) * t2, getLineColor(path, attributes))
+                drawer.line(start, start + (end - start) * t2, getLineColor(path, attributes), getLineWeight(attributes))
 
                 val s1 = (start + end) * 0.5
                 val (x1, x2) = ((s1 - (0.0 to Plotter.LINE_HALF)) to (s1 + (0.0 to Plotter.LINE_HALF))).let {
@@ -189,8 +195,8 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         val s = getLineStart(startPoint, startDirection, Plotter.RADIUS)
         val e = getLineStart(endPoint, endDirection, Plotter.RADIUS)
 
-        drawer.line(getLineStart(startPoint, startDirection), s, getLineColor(path, attributes))
-        drawer.line(getLineStart(endPoint, endDirection), e, getLineColor(path, attributes))
+        drawer.line(getLineStart(startPoint, startDirection), s, getLineColor(path, attributes), getLineWeight(attributes))
+        drawer.line(getLineStart(endPoint, endDirection), e, getLineColor(path, attributes), getLineWeight(attributes))
         val p1 = Point2D(s.x, e.y)
         val p2 = Point2D(e.x, s.y)
 
@@ -203,7 +209,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
             else -> 0
         }
 
-        drawer.arc(center, Plotter.RADIUS, getLineColor(path, attributes), start.toDouble(), 270.0 * t)
+        drawer.arc(center, Plotter.RADIUS, getLineColor(path, attributes), start.toDouble(), 270.0 * t, getLineWeight(attributes))
 
         val lineHalf = radiusToShift(Plotter.LINE_HALF)
         val rs = radiusToShift(Plotter.RADIUS)
@@ -258,7 +264,7 @@ open class PathDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
             points.add(e)
         else
             points.add(calcBezier(s, sd, ed, e, t))
-        drawer.line(points, getLineColor(path, attributes))
+        drawer.line(points, getLineColor(path, attributes), getLineWeight(attributes))
 
 
         if (t < 1.0) {

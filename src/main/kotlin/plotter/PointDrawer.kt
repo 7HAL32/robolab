@@ -2,6 +2,7 @@ package plotter
 
 import Planet
 import javafx.geometry.Point2D
+import javafx.scene.paint.Color
 import model.Direction
 import model.Point
 
@@ -10,20 +11,38 @@ import model.Point
  */
 open class PointDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
 
+    data class Asdf(
+            val point: Point,
+            val direction: Direction,
+            val fromServer: Boolean,
+            val isHighlight: Boolean
+    )
+
     override fun draw(planet: Planet, pointerEvent: PointerEvent, t: Double) {
         val cols = drawer.getVisibleCols()
         val rows = drawer.getVisibleRows()
 
-        planet.paths.map { it.first }.let {
+        planet.paths.let {
             it.flatMap {
                 setOf(
-                        Triple(it.startPoint, it.startDirection, it.weight != null),
-                        Triple(it.endPoint, it.endDirection, it.weight != null)
+                        Asdf(it.first.startPoint, it.first.startDirection, it.first.weight != null, it.second.contains(PathAttributes.HIGHLIGHTED)),
+                        Asdf(it.first.endPoint, it.first.endDirection, it.first.weight != null, it.second.contains(PathAttributes.HIGHLIGHTED))
                 )
-            }.groupBy { it.first }
+            }.groupBy { it.point }
                     .mapValues {
-                        it.value.groupBy { it.second }.mapValues {
-                            it.value.map { it.third }.contains(true)
+                        it.value.groupBy { it.direction }.mapValues {
+                            if (it.value.map { it.isHighlight }.contains(true)) {
+                                Pair(Plotter.Companion.COLOR.HIGHLIGHT, Plotter.LineType.THICK)
+                            } else {
+                                Pair(
+                                        if (it.value.map { it.fromServer }.contains(true)) {
+                                            Plotter.Companion.COLOR.LINE
+                                        } else {
+                                            Plotter.Companion.COLOR.ROBOT
+                                        },
+                                        Plotter.LineType.NORMAL
+                                )
+                            }
                         }
                     }
         }.filter { (point, _) ->
@@ -33,7 +52,7 @@ open class PointDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         }
     }
 
-    private fun drawPoint(planet: Planet, point: Point, directionFromServer: Map<Direction, Boolean>, pointerEvent: PointerEvent) {
+    private fun drawPoint(planet: Planet, point: Point, directionFromServer: Map<Direction, Pair<Color, Plotter.LineType>>, pointerEvent: PointerEvent) {
         if (point == planet.target) {
             drawer.circle(point.to2D(), Plotter.POINT_RADIUS, Plotter.Companion.COLOR.TARGET)
         }
@@ -43,8 +62,8 @@ open class PointDrawer(drawer: DrawHelper) : AbsDrawer(drawer) {
         }
 
 
-        directionFromServer.forEach { (direction, fromServer) ->
-            drawer.line(point.to2D(), getLineStart(point, direction), if (fromServer) Plotter.Companion.COLOR.LINE else Plotter.Companion.COLOR.ROBOT)
+        directionFromServer.forEach { (direction, style) ->
+            drawer.line(point.to2D(), getLineStart(point, direction), style.first, style.second)
         }
 
         val background = when (point.getColor(planet.start, planet.startColor)) {

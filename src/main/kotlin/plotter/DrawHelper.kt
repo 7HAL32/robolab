@@ -105,13 +105,17 @@ class DrawHelper(
         canvas.lineWidth = oldSize
     }
 
-    fun arc(center: Point2D, radius: Double, lineColor: Color, start: Double, extend: Double) {
+    fun arc(center: Point2D, radius: Double, lineColor: Color, start: Double, extend: Double, lineType: Plotter.LineType = Plotter.LineType.NORMAL) {
         canvas.stroke = lineColor
 
         val p = systemToReal(center - (radius to -radius))
         val r = radius * 2 * Plotter.WIDTH_GRID * plotter.scale
 
+        val oldSize = canvas.lineWidth
+        if (lineType == Plotter.LineType.THICK)
+            canvas.lineWidth = THICK_LINE
         canvas.strokeArc(p.x, p.y, r, r, start, extend, ArcType.OPEN)
+        canvas.lineWidth = oldSize
     }
 
     fun number(number: Int, position: Point2D, color: Color, fontSize: Double) {
